@@ -54,12 +54,19 @@
         try {
           geojson = JSON.parse(geoString);  // should raise SyntaxError if CSV (i.e., not json parsable)
         }
-        catch (e if e instanceof SyntaxError) {
-          // try converting expected csv to geojson
-          geojson_string = csvToGeoJSON(geoString);
-          geojson = JSON.parse(geojson_string);
+        // catch (e if e instanceof SyntaxError) {
+        catch (e) {
+          if (e instanceof SyntaxError) {
+            // try converting expected csv to geojson
+            geojson_string = csvToGeoJSON(geoString);
+            geojson = JSON.parse(geojson_string);
+          }
+          else {
+            alert("error loading data file..");
+            console.log(e);
+          }
+          return;
         }
-
 
         map.data.addGeoJson(geojson);
         zoom(map);
