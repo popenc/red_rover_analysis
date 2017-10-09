@@ -1,0 +1,14 @@
+Turns Tests
++++++++++++++++++++
+
+Summary: Plots, data, and analysis of turn tests performed October 4th, 2017.
+
+Date: 10-04-2017
+Type: turn_tests
+BaseGPSPos: 5min_single_avg
+RoverSpeed: 75%
+AvgRPM: 2270
+
+Uses red_rover_analysis github repo to analyze data.
+Code: red_rover_analysis.py
+Bagfile: ~/bagfiles/turn_test_5min_avg_20171004.bag
