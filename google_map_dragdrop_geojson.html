@@ -36,17 +36,39 @@
     <script>
       /* Map functions */
 
-      var map;
+      var map, heatmap, infowindow;
 
       function initMap() {
         // set up the map
         map = new google.maps.Map(document.getElementById('map'), {
-          center: new google.maps.LatLng(0, 0),
-          zoom: 2
+          // center: new google.maps.LatLng(0, 0),
+          center: new google.maps.LatLng(31.473600, -83.529900),
+          zoom: 18,
+          mapTypeId: "satellite"
         });
+
+
+
+        infowindow = new google.maps.InfoWindow();
+
+        // heatmap = new google.maps.visualization.HeatmapLayer({
+        //   data: getPoints(),
+        //   map: map
+        // });
+
       }
 
-      function loadGeoJsonString(geoString) {
+
+      // function showProperties() {
+      //   // display the Point's properties if clicked, uses the infowindow from google maps..
+      //   infowindow.open(map, marker);
+      // }
+      function displayProperties() {
+        console.log("here we are");
+      }
+
+
+      function loadGeoJsonString(geoString, data_type) {
 
         console.log(geoString);
 
@@ -58,18 +80,107 @@
         catch (e) {
           if (e instanceof SyntaxError) {
             // try converting expected csv to geojson
-            geojson_string = csvToGeoJSON(geoString);
-            geojson = JSON.parse(geojson_string);
+            // geojson_string = csvToGeoJSON(geoString);
+            data_arr = csvToObject(geoString);
+            // geojson = JSON.parse(geojson_string);
           }
           else {
             alert("error loading data file..");
             console.log(e);
           }
-          return;
+          // return;
         }
 
-        map.data.addGeoJson(geojson);
-        zoom(map);
+        // map.data.addGeoJson(geojson);  // Should this be removed for below creation of Cirles???????
+
+        // var points_list = geojson['features'];
+        var gmap_points_array = [];
+
+        if (data_type == "heatmap") {
+
+          for (var arr_index in data_arr) {
+            var lat = data_arr[arr_index][1];
+            var lon = data_arr[arr_index][0];
+            var weight = data_arr[arr_index][2];
+
+            // weighted_location = {location: new google.maps.LatLng(lat, lon), weight: weight};
+            // gmap_points_array.push(weighted_location);
+
+            // Trying to use varying radii circles instead of heatmap for now..
+            var marker = new google.maps.Circle({
+              strokeColor: '#FF0000',
+              // strokeOpacity: 0.8,
+              strokeOpacity: 1.0,
+              strokeWeight: 2,
+              fillColor: '#FF0000',
+              fillOpacity: 0.35,
+              map: map,
+              title: String(lat) + ", " + String(lon),
+              center: new google.maps.LatLng(lat, lon),
+              radius: weight / 5
+              // center: citymap[city].center,
+              // radius: Math.sqrt(citymap[city].population) * 100
+            });
+
+            // marker.addListener('click', function () {
+            //   infowindow.setContent('<div>' + marker.title + '</div>');
+            //   infowindow.open(map, this);
+            // });
+            // marker.addListener('click', displayProperties());
+            google.maps.event.addListener(marker, 'click', function () {
+               // do something with this marker ...
+               // this.setTitle('I am clicked');
+               infowindow.setContent('<div>' + this.title + '</div>');
+               infowindow.setPosition(this.center);
+               infowindow.open(map, this);
+            });
+
+          }
+
+          // heatmap = new google.maps.visualization.HeatmapLayer({
+          //   data: gmap_points_array,
+          //   map: map
+          // });
+
+        }
+
+        else if (data_type == "regular") {
+
+          PolylineCoordinates = [];
+
+          for (var i = 0; i < data_arr.length; i++) {
+
+            var datum_arr = data_arr[i];
+            var lat = datum_arr[1];
+            var lon = datum_arr[0];
+
+            // var cityCircle = new google.maps.Circle({
+            //   strokeColor: '#FF0000',
+            //   strokeOpacity: 1,
+            //   // strokeWeight: 2,
+            //   fillColor: '#FF0000',
+            //   fillOpacity: 1,
+            //   map: map,
+            //   center: new google.maps.LatLng(lat, lon), 
+            //   radius: 0.1
+            // });
+
+            PolylineCoordinates.push(new google.maps.LatLng(lat, lon))
+          }
+
+          var Path = new google.maps.Polyline({
+            clickable: false,
+            geodesic: true,
+            path: PolylineCoordinates,
+            strokeColor: "#6495ED",
+            strokeOpacity: 0.5,
+            strokeWeight: 2
+          });
+          Path.setMap(map);
+
+        }
+
+        
       }
 
       /**
@@ -84,6 +195,28 @@
         map.fitBounds(bounds);
       }
 
+      function csvToObject(csvData) {
+        // Returns lat, lon, and weight
+        var lines = csvData.split("\n");
+        var headers = lines[0].split(",");
+
+        var lat_index = 6;
+        var lon_index = 7;
+        var weight_index = 10;
+
+        var results = []; 
+
+        for (var i = 1; i < lines.length - 1; i++) {
+
+          var currentline = lines[i].split(",");  // lat/lon array
+          var datNum = [Number(currentline[lon_index]), Number(currentline[lat_index]), Number(currentline[weight_index])];  // datNum arr --> [lon, lat, weight] (for geojson_)
+          results.push(datNum);
+        }
+
+        // return JSON.stringify(geojsonObj);
+        return results;
+      }
+
       /**
       Handles a drop-n-dropped CSV file, 
       converting it to geoJSON to load onto the map
@@ -95,26 +228,43 @@
         var result = [];
         var headers = lines[0].split(",");
 
+        // var lat_header = "field.latitude";
+        // var lon_header = "field.longitude";
+        var lat_header = "latitude";
+        var lon_header = "longitude";
+
+        // CHANGE THESE IF LAT/LON AT DIFFERENT INDICES
+        var lat_index = 6;
+        var lon_index = 7;
+        var weight_index = 10;
+
         for (var i = 1; i < lines.length - 1; i++) {
 
           var currentline = lines[i].split(",");  // lat/lon array
-          var datNum = [Number(currentline[1]), Number(currentline[0])];  // datNum arr --> [lon, lat] (for geojson_)
+          var datNum = [Number(currentline[lon_index]), Number(currentline[lat_index])];  // datNum arr --> [lon, lat] (for geojson_)
 
 
-          var geoObj = {};
-          geoObj['type'] = "Point";
-          geoObj['coordinates'] = datNum;
+          var latLonPointObj = {
+            'type': "Feature",
+            'geometry': {'type': "Point", 'coordinates': datNum},
+            'properties': {}
+          };
+          featuresArray.push(latLonPointObj);
 
-          var propObj = {};
-          propObj['lat'] = datNum[1];
-          propObj['lon'] = datNum[0];
+          // var geoObj = {};
+          // geoObj['type'] = "Point";
+          // geoObj['coordinates'] = datNum;
 
-          var pointObj = {};
-          pointObj['type'] = "Feature";
-          pointObj['geometry'] = geoObj;
-          pointObj['properties'] = {};
+          // var propObj = {};
+          // propObj['lat'] = datNum[0];
+          // propObj['lon'] = datNum[1];
 
-          featuresArray.push(pointObj);
+          // var pointObj = {};
+          // pointObj['type'] = "Feature";
+          // pointObj['geometry'] = geoObj;
+          // pointObj['properties'] = {};
+
+          // featuresArray.push(pointObj);
 
         }
 
@@ -180,13 +330,27 @@
         hidePanel(e);
 
         var files = e.dataTransfer.files;
+
+
+        var file_name = files[0]['name']; // check if "ponits of interest" or field row data..
+        var data_type = "";
+
+        // if (file_name.indexOf("gps_field_test") > 0) {
+        if (file_name.includes("gps_field_test")) {
+          // plot these as normal dots, not heatmap
+          data_type = "regular";
+        }
+        else {
+          data_type = "heatmap";
+        }
+
         if (files.length) {
           // process file(s) being dropped
           // grab the file data from each file
           for (var i = 0, file; file = files[i]; i++) {
             var reader = new FileReader();
             reader.onload = function(e) {
-              loadGeoJsonString(e.target.result);
+              loadGeoJsonString(e.target.result, data_type);
             };
             reader.onerror = function(e) {
               console.error('reading failed');
@@ -213,6 +377,6 @@
       }
     </script>
     <script async defer
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA7FqD8uqa9pk7FFmTrYY5ZUBHcYE6wRCQ&callback=initialize"></script>
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA7FqD8uqa9pk7FFmTrYY5ZUBHcYE6wRCQ&libraries=visualization&callback=initialize"></script>
   </body>
 </html>

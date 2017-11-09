@@ -15,6 +15,8 @@ import csv
 import utm
 import json
 
+import LatLon
+
 
 
 
@@ -99,6 +101,12 @@ class GPSPlot(object):
 		nearest_val = min(data_array, key=lambda x:abs(x-val))
 		print("nearest val in data array: {}".format(nearest_val))
 		return data_array.index(nearest_val)
+
+	def convertDegreeLatLonToDecimalLatLon(self, data_list):
+		_dec_lat_lons = []
+		for point in data_list:
+			_dec_lat_lons.append(string2latlon(point['lat'], point['lon'], 'd% %m% %S% %H'))
+		return _dec_lat_lons
 
 
 
@@ -241,6 +249,8 @@ class GPSPlot(object):
 
 
 
+
+
 if __name__ == '__main__':
 	"""
 	If being run by user as standalone script,
@@ -254,83 +264,110 @@ if __name__ == '__main__':
 		+ gmap_plot - plot lat/lons on a google maps page.
 	"""
 
-	# Get arguments and build GPSPlot class instance:
-	gps_plot = GPSPlot()
-	gps_plot.filename = sys.argv[1]
-	gps_plot.xheader = sys.argv[2]
-	gps_plot.yheader = sys.argv[3]
+	if sys.argv[2] == "to_dec":
+		gps = GPSPlot()
+		data = gps.upload_csv(sys.argv[1])
+		easting_index = 8
+		northing_index = 9
+		zone_number = 17
+		zone_letter = "N"
 
-	_csv_data = gps_plot.upload_csv(gps_plot.filename)  # upload csv data of filename
-	_func = sys.argv[4]
+		_declatlon_list = []  # format: list(list[lat, lon])
+		for item in data[1:]:
+			_latlon = []
+			_easting = item[easting_index].split('(')[0]
+			print("easting: {}".format(_easting))
+			_northing = item[northing_index]
+			print("northing: {}".format(_northing))
+			_latlondec = utm.to_latlon(float(_easting), float(_northing), zone_number, zone_letter)
+			_declatlon_list.append([_latlondec[0], _latlondec[1]])  # list of list items of lat,lon in dec
 
-	_axes_range = [None, None, None, None]  # [xmin, xmax, ymin, ymax]
+		print("creating a file for updated data!")
 
-	# check for provided range (todo: handle Nones):
-	if len(sys.argv) > 5:
-		# assuming x/y min/max ranges are set..
-		_axes_range[0] = sys.argv[5]
-		_axes_range[1] = sys.argv[6]
-		_axes_range[2] = sys.argv[7]
-		_axes_range[3] = sys.argv[8]
-		print("Axes range: {}".format(_axes_range))
+		fileout = open('lat_lon_decimals.csv', 'w')
+		for item in _declatlon_list:
+			fileout.write("{}, {}\n".format(item[0], item[1]))
+		fileout.close()
+
+	else:
+
+		# Get arguments and build GPSPlot class instance:
+		gps_plot = GPSPlot()
+		gps_plot.filename = sys.argv[1]
+		gps_plot.xheader = sys.argv[2]
+		gps_plot.yheader = sys.argv[3]
+
+		_csv_data = gps_plot.upload_csv(gps_plot.filename)  # upload csv data of filename
+		_func = sys.argv[4]
+
+		_axes_range = [None, None, None, None]  # [xmin, xmax, ymin, ymax]
+
+		# check for provided range (todo: handle Nones):
+		if len(sys.argv) > 5:
+			# assuming x/y min/max ranges are set..
+			_axes_range[0] = sys.argv[5]
+			_axes_range[1] = sys.argv[6]
+			_axes_range[2] = sys.argv[7]
+			_axes_range[3] = sys.argv[8]
+			print("Axes range: {}".format(_axes_range))
 
 
 
-	if _func == 'utm_csv':
-		_csv_data = gps_plot.add_utm_to_csvdata(_csv_data)
-		_fileout_name = "{}_utm.csv".format(self.filename.split(".")[0])  # filename --> inputfile + "_utm.cscv"
-		gps_plot.create_csv(_fileout_name)
-		print ("file: {} created..".format(_fileout_name))
+		if _func == 'utm_csv':
+			_csv_data = gps_plot.add_utm_to_csvdata(_csv_data)
+			_fileout_name = "{}_utm.csv".format(self.filename.split(".")[0])  # filename --> inputfile + "_utm.cscv"
+			gps_plot.create_csv(_fileout_name)
+			print ("file: {} created..".format(_fileout_name))
 
-	# plot xheader col vs yheader col:
-	elif _func == 'plotxy':
+		# plot xheader col vs yheader col:
+		elif _func == 'plotxy':
 
-		if _axes_range[0] != 'None' and _axes_range[1] != 'None':
-			# plt.axes().set_xlim(float(_axes_range[0]), float(_axes_range[1]))
-			# TODO: Not always float for conversion!!!
-			plt.xlim(float(_axes_range[0]), float(_axes_range[1]))
-			print("set x range from {} to {}".format(_axes_range[0], _axes_range[1]))
-		if _axes_range[2] != 'None' and _axes_range[3] != 'None':
-			# plt.axes().set_ylim(_axes_range[2], _axes_range[3])
-			plt.ylim(float(_axes_range[2]), float(_axes_range[3]))
-			print("set y range from {} to {}".format(_axes_range[2], _axes_range[3]))
+			if _axes_range[0] != 'None' and _axes_range[1] != 'None':
+				# plt.axes().set_xlim(float(_axes_range[0]), float(_axes_range[1]))
+				# TODO: Not always float for conversion!!!
+				plt.xlim(float(_axes_range[0]), float(_axes_range[1]))
+				print("set x range from {} to {}".format(_axes_range[0], _axes_range[1]))
+			if _axes_range[2] != 'None' and _axes_range[3] != 'None':
+				# plt.axes().set_ylim(_axes_range[2], _axes_range[3])
+				plt.ylim(float(_axes_range[2]), float(_axes_range[3]))
+				print("set y range from {} to {}".format(_axes_range[2], _axes_range[3]))
 
-		_plot_data = gps_plot.plotxy(_csv_data, gps_plot.xheader, gps_plot.yheader)  # plot obj.x/yheader
-		print("plot data parsed, now making plot..")
+			_plot_data = gps_plot.plotxy(_csv_data, gps_plot.xheader, gps_plot.yheader)  # plot obj.x/yheader
+			print("plot data parsed, now making plot..")
 
-		plt.plot(_plot_data['xarray'], _plot_data['yarray'])  # other options, titles, ranges???
-		plt.ylabel(gps_plot.yheader)
-		plt.xlabel(gps_plot.xheader)
-		plt.grid(True)
+			plt.plot(_plot_data['xarray'], _plot_data['yarray'])  # other options, titles, ranges???
+			plt.ylabel(gps_plot.yheader)
+			plt.xlabel(gps_plot.xheader)
+			plt.grid(True)
 
-		# title is filename without file extension!
-		_title = gps_plot.filename[0:gps_plot.filename.index(".")]
-		plt.title("Turn Tests 10-04-2017 (5min Single Avg)")
-		# plt.title(gps_plot.filename)
-		# plt.title("{} vs {}".format(gps_plot.yheader, gps_plot.xheader))
-		plt.show()  # display plot!
+			# title is filename without file extension!
+			_title = gps_plot.filename[0:gps_plot.filename.index(".")]
+			plt.title("Turn Tests 10-04-2017 (5min Single Avg)")
+			# plt.title(gps_plot.filename)
+			# plt.title("{} vs {}".format(gps_plot.yheader, gps_plot.xheader))
+			plt.show()  # display plot!
 
-	elif _func == 'findpeaks':
-		# finds peaks of data, returns list of them
-		_plot_data = gps_plot.find_peaks(_csv_data, gps_plot.xheader, gps_plot.yheader, _axes_range)
+		elif _func == 'findpeaks':
+			# finds peaks of data, returns list of them
+			_plot_data = gps_plot.find_peaks(_csv_data, gps_plot.xheader, gps_plot.yheader, _axes_range)
 
-		_x_array = _plot_data.get('xarray')
-		_y_array = _plot_data.get('yarray')
-		_xmaximas = _plot_data.get('xmaximas')
-		_ymaximas = _plot_data.get('ymaximas')
-		_xminimas = _plot_data.get('xminimas')
-		_yminimas = _plot_data.get('yminimas')
+			_x_array = _plot_data.get('xarray')
+			_y_array = _plot_data.get('yarray')
+			_xmaximas = _plot_data.get('xmaximas')
+			_ymaximas = _plot_data.get('ymaximas')
+			_xminimas = _plot_data.get('xminimas')
+			_yminimas = _plot_data.get('yminimas')
 
-		print("y-minimas: {}".format(_yminimas))
-		print("y-maximas: {}".format(_ymaximas))
-		print("x-minimas: {}".format(_xminimas))
-		print("x-maximas: {}".format(_xmaximas))
+			print("y-minimas: {}".format(_yminimas))
+			print("y-maximas: {}".format(_ymaximas))
+			print("x-minimas: {}".format(_xminimas))
+			print("x-maximas: {}".format(_xmaximas))
 
-		# now plot xy w/ peaks:
-		plt.plot(_x_array, _y_array, _xmaximas, _ymaximas, 'g^', _xminimas, _yminimas, 'bv')  # other options, titles, ranges???
-		plt.ylabel(gps_plot.yheader)
-		plt.xlabel(gps_plot.xheader)
-		plt.grid(True)
+			# now plot xy w/ peaks:
+			plt.plot(_x_array, _y_array, _xmaximas, _ymaximas, 'g^', _xminimas, _yminimas, 'bv')  # other options, titles, ranges???
+			plt.ylabel(gps_plot.yheader)
+			plt.xlabel(gps_plot.xheader)
+			plt.grid(True)
 
-		plt.title("Turn Tests 10-04-2017 (5min Single Avg)")
-		plt.show()  # display plot!
+			plt.title("Turn Tests 10-04-2017 (5min Single Avg)")
+			plt.show()  # display plot!
