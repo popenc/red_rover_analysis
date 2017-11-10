@@ -129,15 +129,26 @@ if __name__ == '__main__':
 	Run on the command line
 	E.g., python red_rover_kinematics.py 5.1 left -- turn left at 5.1 deg angle
 	"""
-	_angle = float(sys.argv[1])
-	_turn_dir = sys.argv[2]
+
+	# Step 1: Draw some circles..
+	# _angle = float(sys.argv[1])
+	# _turn_dir = sys.argv[2]
+	# _rover = RoverKinematics()
+	# _turn_radius = _rover.calculate_radius(_angle, _turn_dir)
+	# if _turn_radius:
+	# 	print("Plotting turn radius: {} at {} degree angle".format(_turn_radius, _angle))
+	# 	_rover.plot_turn(_turn_radius)
+	# else:
+	# 	print("Error getting turn radius..")
+
+
+
+	# Step 2: Start using a ref point and equations from pure pursuit paper..
+	_ref_pos = [float(sys.argv[1]), float(sys.argv[2])]  # [x,y] ref point
+	_rover_pos = [0,0]  # Assuming rover at 0,0
+	
+	print("Rover position: {}".format(_rover_pos))
+	print("Reference point: {}".format(_ref_pos))
+
 	_rover = RoverKinematics()
-
-	_turn_radius = _rover.calculate_radius(_angle, _turn_dir)
-
-	if _turn_radius:
-		print("Plotting turn radius: {} at {} degree angle".format(_turn_radius, _angle))
-		_rover.plot_turn(_turn_radius)
-
-	else:
-		print("Error getting turn radius..")
+	_angle = _rover.simplest_pursuit(_rover_pos, _ref_pos)
