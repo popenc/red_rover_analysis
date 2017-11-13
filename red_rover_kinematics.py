@@ -21,9 +21,7 @@ class RoverKinematics(object):
 	"""
 
 	def __init__(self):
-
-		self.rover_pos = None
-		self.ref_pos = None
+		
 		self.left_a = 27.974966981  # constant for left turn equation
 		self.left_b = 0.7213692582  # contstant for left turn equation
 		self.right_a = 26.2074918622  # constant for right turn equation
@@ -123,7 +121,7 @@ class RoverKinematics(object):
 		elif plot_data['direction'] == "right":
 			plot_data['x_turn'] = plot_data['radius'] * np.cos(theta) + plot_data['radius']
 
-		plt.plot([x_rov, x_ref], [y_rov, y_ref], 'ro', plot_data.get('x_turn'), plot_data.get('y_turn'))
+		plt.plot([x_rov], [y_rov], 'ro', [x_ref], [y_ref], 'bo', plot_data.get('x_turn'), plot_data.get('y_turn'))
 		plt.axis([-10, 10, -10, 10])
 		plt.show()
 
