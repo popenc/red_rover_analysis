@@ -27,17 +27,18 @@ class RoverKinematics(object):
 		self.right_a = 26.2074918622  # constant for right turn equation
 		self.right_b = 0.7724722082  # constant for right turn equation
 
+		# pyplot graph settings:
+		self.graph_xmin = -10
+		self.graph_xmax = 10
+		self.graph_ymin = -10
+		self.graph_ymax = 10
 
-	# def calculate_radius(self, angle, direction):
-	# 	"""
-	# 	Calculates radius based on turn equation and direction
-	# 	"""
-	# 	if direction == "left":
-	# 		return self.left_a * angle**-self.left_b
-	# 	if direction == "right":
-	# 		return self.right_a * angle**-self.right_b
-	# 	else:
-	# 		return None
+		self.look_ahead_radius = 0.5  # radius around ref pt for rover to start calculating next turn
+
+		self.rover_turn_min = 0.0  # min turning radius rover can perform
+		self.rover_turn_max = 0.0  # max turning radius rover can do
+
+
 	def calculate_radius(self, rover_pos, ref_pos):
 		"""
 		Calculates radius based on pure pursuit paper
@@ -99,6 +100,14 @@ class RoverKinematics(object):
 		plt.show()
 
 
+	# def plot_look_ahead_radius(self, ref_pos):
+	# 	"""
+	# 	Adds a dotted circle around a reference point, which
+	# 	is the radius at which the rover should look to the
+	# 	next point.
+	# 	"""
+
+
 	def plot_turn_to_ref(self, plot_data):
 		"""
 		Plots rover as dot, ref point, then turn
@@ -121,8 +130,28 @@ class RoverKinematics(object):
 		elif plot_data['direction'] == "right":
 			plot_data['x_turn'] = plot_data['radius'] * np.cos(theta) + plot_data['radius']
 
-		plt.plot([x_rov], [y_rov], 'ro', [x_ref], [y_ref], 'bo', plot_data.get('x_turn'), plot_data.get('y_turn'))
-		plt.axis([-10, 10, -10, 10])
+		# TODO: Add halos around ref points (i.e., look-adhead radius)..
+
+		_xref_array, _yref_array = [], []
+		_xhalo_array, _yhalo_array = [], []
+
+		for ref_pair in plot_data.get('ref_pos_list'):
+			# Build reference points plot arrays ([x1,x2,..], [y1,y2,..]):
+			_xref_array.append(ref_pair[0])
+			_yref_array.append(ref_pair[1])
+
+			
+
+		# plt.plot([x_rov], [y_rov], 'ro', [x_ref], [y_ref], 'bo', plot_data.get('x_turn'), plot_data.get('y_turn'))
+		plt.plot(
+			[x_rov], [y_rov], 'rs',  # plots rover position
+			_xref_array, _yref_array, 'bo',  # plots reference points
+			plot_data.get('x_turn'), plot_data.get('y_turn')  # plots first turn radius
+
+		)
+
+		plt.axis([self.graph_xmin, self.graph_xmax, self.graph_ymin, self.graph_ymax])
+		plt.grid(True)
 		plt.show()
 
 		return
@@ -136,21 +165,24 @@ if __name__ == '__main__':
 	Using a ref point and equations from pure pursuit paper.
 	"""
 
-	_ref_pos = [float(sys.argv[1]), float(sys.argv[2])]  # [x,y] ref point
+	# _ref_pos = [float(sys.argv[1]), float(sys.argv[2])]  # [x,y] ref point as command-line input
 	_rover_pos = [0,0]  # Assuming rover at 0,0
+	_ref_pos_list = [[1, 3], [1, 5], [1, 7]]  # now trying two hardcoded ref points - beginnings of straight line
 	
 	print("Rover position: {}".format(_rover_pos))
-	print("Reference point: {}".format(_ref_pos))
+	# print("Reference point: {}".format(_ref_pos))
+	print("Ref points: {}".format(_ref_pos_list))
 
 	_rover = RoverKinematics()
 
-	_direction = _rover.determine_turn_direction(_rover_pos, _ref_pos)
-	_radius = _rover.calculate_radius(_rover_pos, _ref_pos)
-	_angle = _rover.calculate_angle(_radius, _direction)
+	_direction = _rover.determine_turn_direction(_rover_pos, _ref_pos_list[0])  # determine turn direction to ref point
+	_radius = _rover.calculate_radius(_rover_pos, _ref_pos_list[0])  # calculate turn radius to ref point
+	_angle = _rover.calculate_angle(_radius, _direction)  # determine rover turn angle to ref point
 
 	_plot_data = {
 		'rover_pos': _rover_pos,
-		'ref_pos': _ref_pos,
+		'ref_pos': _ref_pos_list[0],
+		'ref_pos_list': _ref_pos_list,
 		'direction': _direction,
 		'radius': _radius,
 		'angle': _angle
