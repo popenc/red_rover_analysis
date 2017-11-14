@@ -136,18 +136,21 @@ class RoverKinematics(object):
 		_xhalo_array, _yhalo_array = [], []
 
 		for ref_pair in plot_data.get('ref_pos_list'):
-			# Build reference points plot arrays ([x1,x2,..], [y1,y2,..]):
+			# Building reference points plot arrays ([x1,x2,..], [y1,y2,..]):
 			_xref_array.append(ref_pair[0])
 			_yref_array.append(ref_pair[1])
 
+			# Creating look-adhead radius around ref point: 
+			_xhalo_array.append(self.look_ahead_radius * np.cos(theta))
+			_yhalo_array.append(self.look_ahead_radius * np.sin(theta))
 			
 
 		# plt.plot([x_rov], [y_rov], 'ro', [x_ref], [y_ref], 'bo', plot_data.get('x_turn'), plot_data.get('y_turn'))
 		plt.plot(
 			[x_rov], [y_rov], 'rs',  # plots rover position
 			_xref_array, _yref_array, 'bo',  # plots reference points
-			plot_data.get('x_turn'), plot_data.get('y_turn')  # plots first turn radius
-
+			plot_data.get('x_turn'), plot_data.get('y_turn'),  # plots first turn radius
+			_xhalo_array, _yhalo_array, 'g--',  # plots halos around ref points
 		)
 
 		plt.axis([self.graph_xmin, self.graph_xmax, self.graph_ymin, self.graph_ymax])
