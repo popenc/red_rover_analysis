@@ -42,12 +42,16 @@ class RoverKinematics(object):
 		self.rover_right_radius_max = 2.25  # max right turn radius in meters
 
 
-	def calculate_radius(self, rover_pos, ref_pos):
+	def calculate_radius(self, ref1, ref2):
 		"""
 		Calculates radius based on pure pursuit paper
 		"""
-		_x_diff = abs(ref_pos[0] - rover_pos[0])
-		_y_diff = abs(ref_pos[1] - rover_pos[1])
+		_x_diff = abs(ref2[0] - ref1[0])
+		_y_diff = abs(ref2[1] - ref1[1])
+
+		if _x_diff == 0:
+			return 0
+
 		return (_x_diff**2 + _y_diff**2) / (2.0 * _x_diff)
 
 
@@ -110,6 +114,30 @@ class RoverKinematics(object):
 	# 	next point.
 	# 	"""
 
+	def build_turn_plot_data(self, plot_data):
+
+		_refs_list = plot_data.get('ref_pos_list', [])
+		# _theta = np.linspace(0, 2*np.pi, 100)
+		_turn_plots = []  # list of [x,y] for plotting turns
+
+		for i in range(0, len(_refs_list) - 1):
+
+			_ref1 = _refs_list[i]  # initial position [x,y]
+			_ref2 = _refs_list[i + 1]  # destination position [x,y]
+			_radius = plot_data['radius_list'][i]
+			_turn = None
+
+			if plot_data['direction_list'][i] == "left":
+				# _xturn = plot_data['radius_list'][i] * np.cos(theta) - plot_data['radius_list'][i]
+				_turn = plt.Circle((_ref1[0] - _radius, _ref1[1]), _radius, color='g', fill=False)
+			elif plot_data['direction_list'][i] == "right":
+				_turn = plt.Circle((_ref1[0] + _radius, _ref1[1]), _radius, color='g', fill=False)
+				# _xturn = plot_data['radius_list'][i] * np.cos(theta) + plot_data['radius_list'][i]
+
+			_turn_plots.append(_turn)
+
+		return _turn_plots
+
 
 	def plot_turn_to_ref(self, plot_data):
 		"""
@@ -117,45 +145,31 @@ class RoverKinematics(object):
 		radius rover takes to ref point.
 		"""
 
-		# rover point pair:
-		x_rov = plot_data['rover_pos'][0]
-		y_rov = plot_data['rover_pos'][1]
+		_refs_list = plot_data.get('ref_pos_list', [])
 
-		# reference point pair:
-		x_ref = plot_data['ref_pos'][0]
-		y_ref = plot_data['ref_pos'][1]
-
-		theta = np.linspace(0, 2*np.pi, 100)
-		plot_data['y_turn'] = plot_data['radius'] * np.sin(theta)
-
-		if plot_data['direction'] == "left":
-			plot_data['x_turn'] = plot_data['radius'] * np.cos(theta) - plot_data['radius']
-		elif plot_data['direction'] == "right":
-			plot_data['x_turn'] = plot_data['radius'] * np.cos(theta) + plot_data['radius']
-
-		# TODO: Add halos around ref points (i.e., look-adhead radius)..
-
+		ax = plt.gca()  # get axes instance from plot
 		_xref_array, _yref_array = [], []
-		_halo_array = []
 
-		ax = plt.gca()  # figure out what this does..
-		for ref_pair in plot_data.get('ref_pos_list'):
+		_turn_plots = self.build_turn_plot_data(plot_data)
+
+		for _turn in _turn_plots:
+			ax.add_patch(_turn)  # adding turns to plot
+
+		for ref_pair in _refs_list[1:]:
+			# loop ref points, skipping rover position
+
 			# Building reference points plot arrays ([x1,x2,..], [y1,y2,..]):
 			_xref_array.append(ref_pair[0])
 			_yref_array.append(ref_pair[1])
 
 			# Creating look-adhead radius around ref point: 
-			_halo = plt.Circle((ref_pair[0], ref_pair[1]), self.look_ahead_radius, color='g', fill=False, linestyle='-.')
+			_halo = plt.Circle((ref_pair[0], ref_pair[1]), self.look_ahead_radius, color='b', fill=False, linestyle='dashed')
 			ax.add_patch(_halo)
 
-
-		# plt.plot([x_rov], [y_rov], 'ro', [x_ref], [y_ref], 'bo', plot_data.get('x_turn'), plot_data.get('y_turn'))
 		plt.plot(
-			[x_rov], [y_rov], 'rs',  # plots rover position
+			[_refs_list[0][0]], [_refs_list[0][1]], 'rs',  # plots rover position
 			_xref_array, _yref_array, 'bo',  # plots reference points
 			plot_data.get('x_turn'), plot_data.get('y_turn'),  # plots first turn radius
-			# _xhalo_array, _yhalo_array, 'g--',  # plots halos around ref points
-			# _halo_array
 		)
 
 		plt.axis([self.graph_xmin, self.graph_xmax, self.graph_ymin, self.graph_ymax])
@@ -176,7 +190,7 @@ if __name__ == '__main__':
 	# _ref_pos = [float(sys.argv[1]), float(sys.argv[2])]  # [x,y] ref point as command-line input
 	_rover_pos = [0,0]  # Assuming rover at 0,0
 	# _ref_pos_list = [[1, 3], [1, 5], [1, 7]]  # now trying two hardcoded ref points - beginnings of straight line
-	_ref_pos_list = [[1, 3], [1, 5]]  # now trying two hardcoded ref points - beginnings of straight line
+	_ref_pos_list = [[1, 3], [1.2, 5], [0.8, 6]]  # now trying two hardcoded ref points - beginnings of straight line
 	
 	print("Rover position: {}".format(_rover_pos))
 	# print("Reference point: {}".format(_ref_pos))
@@ -191,22 +205,25 @@ if __name__ == '__main__':
 		'direction_list': [],  # turn direction to each ref point
 		'radius_list': [],  # radius of turn to each ref point
 		'angle_list': []  # turn angle to each ref point
-		# 'direction': _direction,
-		# 'radius': _radius,
-		# 'angle': _angle
 	}
 
-	_ref_pos_list.prepend(_rover_pos)  # add rover position to beginning of ref points list..
+	_ref_pos_list.insert(0, _rover_pos)  # add rover position to beginning of ref points list..
+
 	# for _ref_point in _ref_pos_list:
 	for i in range(0, len(_ref_pos_list) - 1):
 		# _direction = _rover.determine_turn_direction(_rover_pos, _ref_pos_list[0])  # determine turn direction to ref point
 		# _radius = _rover.calculate_radius(_rover_pos, _ref_pos_list[0])  # calculate turn radius to ref point
 		# _angle = _rover.calculate_angle(_radius, _direction)  # determine rover turn angle to ref point
 
+		_ref1 = _ref_pos_list[i]
+		_ref2 = _ref_pos_list[i + 1]
+
+		print("ref1: {}, ref2: {}".format(_ref1, _ref2))
+
 		# Start with calculating point to point without worrying about the reference point halos...
 		# _direction = _rover.determine_turn_direction(_rover_pos, _ref_point)  # determine turn direction to ref point
-		_direction = _rover.determine_turn_direction(_ref_pos_list[i], _ref_pos_list[i + 1])  # determine turn direction to ref point
-		_radius = _rover.calculate_radius(_rover_pos, _ref_point)  # calculate turn radius to ref point
+		_direction = _rover.determine_turn_direction(_ref1, _ref2)  # determine turn direction to ref point
+		_radius = _rover.calculate_radius(_ref1, _ref2)  # calculate turn radius to ref point
 		_angle = _rover.calculate_angle(_radius, _direction)  # determine rover turn angle to ref point
 
 		_plot_data['direction_list'].append(_direction)
@@ -216,4 +233,4 @@ if __name__ == '__main__':
 
 	print("Plot data: {}".format(_plot_data))
 
-	# _rover.plot_turn_to_ref(_plot_data)
+	_rover.plot_turn_to_ref(_plot_data)
