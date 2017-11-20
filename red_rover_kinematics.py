@@ -42,6 +42,8 @@ class RoverKinematics(object):
 		self.rover_left_radius_min = 2.26  # min left turn radius for rover, in meters
 		self.rover_right_radius_min = 2.25  # min right turn radius in meters
 
+		self.angle_increment = 5  # divide up angle from pt->pt by this much
+
 
 	def calculate_radius(self, ref1, ref2):
 		"""
@@ -56,7 +58,7 @@ class RoverKinematics(object):
 		return (_x_diff**2 + _y_diff**2) / (2.0 * _x_diff)
 
 
-	def calculate_angle(self, radius, direction):
+	def calculate_rover_pivot(self, radius, direction):
 		"""
 		Calculates angle based on turn equation and direction
 		"""
@@ -66,6 +68,14 @@ class RoverKinematics(object):
 			return (self.right_a / radius)**(1.0/self.right_b)
 		else:
 			return None
+
+	def calculate_angle(self, radius, step_distance):
+		"""
+		Different than "calculate_rover_pivot", which is the angle
+		of the Rover's pivot as it turns. This angle is calculated
+		b/w the points and is based off the law the cosines.
+		"""
+		return np.arccos(1 - (step_distance**2 / (2*radius**2)))
 
 
 	def determine_turn_direction(self, rover_pos, ref_pos):
@@ -107,13 +117,6 @@ class RoverKinematics(object):
 		plt.grid(True)
 		plt.show()
 
-
-	# def plot_look_ahead_radius(self, ref_pos):
-	# 	"""
-	# 	Adds a dotted circle around a reference point, which
-	# 	is the radius at which the rover should look to the
-	# 	next point.
-	# 	"""
 
 	def build_turn_plot_data(self, plot_data):
 
@@ -180,20 +183,7 @@ class RoverKinematics(object):
 		return
 
 
-
-
-
-def animate(i):
-	line.set_ydata(np.sin(x + i/10.0))  # update the data
-	return line,
-
-
-# Init only required for blitting to give a clean slate.
-def init():
-	line.set_ydata(np.ma.array(x, mask=True))
-	return line,
-
-
+		
 
 
 
@@ -204,14 +194,9 @@ if __name__ == '__main__':
 	"""
 
 	# _ref_pos = [float(sys.argv[1]), float(sys.argv[2])]  # [x,y] ref point as command-line input
-	_rover_pos = [0,0]  # Assuming rover at 0,0
-	_end_pos = [10,20]
-	# _ref_pos_list = [[1, 3], [1, 5], [1, 7]]  # now trying two hardcoded ref points - beginnings of straight line
-	_ref_pos_list = [[1, 3]]  # now trying two hardcoded ref points - beginnings of straight line
-	
-	print("Rover position: {}".format(_rover_pos))
-	# print("Reference point: {}".format(_ref_pos))
-	print("Ref points: {}".format(_ref_pos_list))
+	_rover_pos = [2, 3]  # Assuming rover at 0,0
+	_end_pos = [-15, 20]
+	_ref_pos_list = [[5, 6], [6, 10], [5.5, 15]]  # now trying two hardcoded ref points - beginnings of straight line
 
 	_rover = RoverKinematics()
 
@@ -227,96 +212,75 @@ if __name__ == '__main__':
 
 	_ref_pos_list.insert(0, _rover_pos)  # add rover position to beginning of ref points list..
 
-	_current_pos = _rover_pos
-
 	_x_path, _y_path = [], []
+	_xrefs, _yrefs = [], []
 
-	_direction = _rover.determine_turn_direction(_rover_pos, _end_pos)  # determine turn direction to ref point
-	_radius = _rover.calculate_radius(_rover_pos, _end_pos)  # calculate turn radius to ref point
-	_angle = _rover.calculate_angle(_radius, _direction)  # determine rover turn angle to ref point
-	_x = _radius * np.cos((_angle * np.pi) / 180)
-	_y = _radius * np.sin((_angle * np.pi) / 180)
-	_x_path.append(_x)
-	_y_path.append(_y)
+	# Looping reference points:
+	# for _ref_pos in _ref_pos_list:
+	for i in range(0, len(_ref_pos_list) - 1):
 
-	# Practicing plotting motion equations based on time and constant velocity..
-	for i in range(0, 100):
+		_ref1 = _ref_pos_list[i]
+		_ref2 = _ref_pos_list[i + 1]
 
-		# _current_pos[0] = _current_pos[0] + 0.1 * i
-		# _current_pos[1] = _current_pos[1] + 0.1 * i
+		_xrefs.append(_ref2[0])  # start at ref2 since 1st point is rover
+		_yrefs.append(_ref2[1])
 
-		if _direction == "left":
-			_x = _radius * np.cos((_angle * np.pi) / 180) - _radius
-		elif _direction == "right":
-			_x = _radius * np.cos((_angle * np.pi) / 180) + _radius
-		_y = _radius * np.sin((_angle * np.pi) / 180)
+		_direction = _rover.determine_turn_direction(_ref1, _ref2)  # determine turn direction to ref point
+		_radius = _rover.calculate_radius(_ref1, _ref2)  # calculate turn radius to ref point
 
-		_direction = _rover.determine_turn_direction([_x, _y], _end_pos)  # determine turn direction to ref point
-		_radius = _rover.calculate_radius([_x, _y], _end_pos)  # calculate turn radius to ref point
-		_angle = _rover.calculate_angle(_radius, _direction)  # determine rover turn angle to ref point
+		# Have to calculate d before _angle above!!!
+		_d = np.sqrt((_ref2[0] - _ref1[0])**2 + (_ref2[1] - _ref1[1])**2)
+		_angle = _rover.calculate_angle(_radius, _d)  # calculate initial angle
 
-		_plot_data['direction_list'].append(_direction)
-		_plot_data['radius_list'].append(_radius)
-		_plot_data['angle_list'].append(_angle)
+		print("Calculated distance b/w points: {}".format(_d))
+		print("Calulated angle: {}".format(_angle))
 
+		# Initial position:
+		_x = _ref1[0]
+		_y = _ref1[1]
 
-		# _x = _radius * np.cos((_angle * np.pi) / 180)
-		# _y = _radius * np.sin((_angle * np.pi) / 180)
+		print("Initial position: {}".format(_ref1))
+		print("Ref points: {}".format(_ref_pos_list))
+		print("Direction for turn 1: {} \nRadius: {} \nAngle: {}".format(_direction, _radius, _angle))
+		print("Incrementing angles by: {} degrees".format(_angle / _rover.angle_increment))
 
-		# _plot_data['path'].append([_x, _y])
-		_x_path.append(_x)
-		_y_path.append(_y)
+		for i in range(1, _rover.angle_increment):
 
+			_bin = i * (_angle / _rover.angle_increment)
 
-	# for i in range(0, len(_ref_pos_list) - 1):
-	# 	# _direction = _rover.determine_turn_direction(_rover_pos, _ref_pos_list[0])  # determine turn direction to ref point
-	# 	# _radius = _rover.calculate_radius(_rover_pos, _ref_pos_list[0])  # calculate turn radius to ref point
-	# 	# _angle = _rover.calculate_angle(_radius, _direction)  # determine rover turn angle to ref point
+			print("angle: {}".format(_bin))
 
-	# 	_ref1 = _ref_pos_list[i]
-	# 	_ref2 = _ref_pos_list[i + 1]
+			_x, _path = None, None
+			if _direction == "right":
+				_x = - _radius * np.cos(_bin) + _radius + _ref1[0]
+				_path = _ref1[0] + _radius
+			elif _direction == "left":
+				_x = _radius * np.cos(_bin) - _radius + _ref1[0]
+				_path = _ref1[0] - _radius
+			
+			_y = _radius * np.sin(_bin) + _ref1[1]
 
-	# 	print("ref1: {}, ref2: {}".format(_ref1, _ref2))
+			_plot_data['direction_list'].append(_direction)
+			_plot_data['radius_list'].append(_radius)
+			_plot_data['angle_list'].append(_angle)
 
-	# 	# Start with calculating point to point without worrying about the reference point halos...
-	# 	# _direction = _rover.determine_turn_direction(_rover_pos, _ref_point)  # determine turn direction to ref point
-	# 	_direction = _rover.determine_turn_direction(_ref1, _ref2)  # determine turn direction to ref point
-	# 	_radius = _rover.calculate_radius(_ref1, _ref2)  # calculate turn radius to ref point
-	# 	_angle = _rover.calculate_angle(_radius, _direction)  # determine rover turn angle to ref point
+			_plot_data['path'].append([_x, _y])
+			_x_path.append(_x)
+			_y_path.append(_y)
 
-	# 	_plot_data['direction_list'].append(_direction)
-	# 	_plot_data['radius_list'].append(_radius)
-	# 	_plot_data['angle_list'].append(_angle)
+		print("Plot data: {}".format(_plot_data))
 
-
-	# 	# _x = 0.45 * np.cos(_angle) * i
-	# 	# _y = 0.45 * np.sin(_angle) * i
-
-	# 	# plot_data['path'].append([_x, _y])
-
-	# # 	# Quick comparison with parametric equations
-	# # 	if _direction == "right":
-	# # 		_x = _radius * np.cos((_angle * np.pi) / 180) + _radius  # get x position with parametric equation
-	# # 	elif _direction == "left":
-	# # 		_x = _radius * np.cos((_angle * np.pi) / 180) - _radius  # get x position with parametric equation
-
-	# # 	_y = _radius * np.sin((_angle * np.pi) / 180) + _ref1[1]  # sames
-	# # 	# _x = _speed * np.cos(_angle) * _time  # get x position with parametric equation
-	# # 	# _y = _speed * np.sin(_angle) * _time  # sames
-
-	# # 	_plot_data['position_list'].append([_x, _y])
-
-
-	print("Plot data: {}".format(_plot_data['path']))
+		ax = plt.gca()
+		_projected_path = plt.Circle((_path, _ref1[1]), _radius, color='b', fill=False, linestyle='dashed')
+		ax.add_patch(_projected_path)
 
 	plt.plot(
-		_rover_pos[0], _rover_pos[1], 'ro',
-		_end_pos[0], _end_pos[1], 'go',
+		_rover_pos[0], _rover_pos[1], 'rs',
+		# _end_pos[0], _end_pos[1], 'go',
+		_xrefs, _yrefs, 'go',
 		_x_path, _y_path, 'bo'	  # plots reference points
 	)
 
 	plt.axis([_rover.graph_xmin, _rover.graph_xmax, _rover.graph_ymin, _rover.graph_ymax])
 	plt.grid(True)
 	plt.show()
-
-	# # # _rover.plot_turn_to_ref(_plot_data)
