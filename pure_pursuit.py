@@ -16,9 +16,10 @@ import matplotlib.pyplot as plt
 # import unicycle_model
 
 Kp = 1.0  # speed propotional gain
-Lf = 1.0  # look-ahead distance
-# Lf = 0.1
-# Lf = 0.5
+# Lf = 1.0  # look-ahead distance
+# Lf = 0.01
+Lf = 1.2
+# Lf = 2.0
 
 
 
@@ -102,18 +103,23 @@ def calc_target_index(state, cx, cy):
 def main():
 
     #  target course
-    cy = np.arange(0, 50, 0.1)
-    cx = [0.1*(np.random.random() - 0.5) for ix in cy]
+    # cy = np.arange(0, 50, 0.1)
+    # cx = [0.1*(np.random.random() - 0.5) for ix in cy]
+
+    cx = [10.0 * math.cos(ix) for ix in np.arange(0, 10, 0.1)]
+    cy = [10.0 * math.sin(iy) for iy in np.arange(0, 10, 0.1)]
 
     print("x: {}".format(cx))
     print("y: {}".format(cy))
 
-    x0 = -1.0  # initial rover xpos
-    y0 = -2.0  # initial rover ypos
+    x0 = -11.0  # initial rover xpos
+    y0 = -11.0  # initial rover ypos
 
     target_speed = 1.6  # i think it's in km/h, so 1.6km/h is ~1mph
 
-    T = 30.0  # max simulation time
+    # T = 30.0  # max simulation time
+    # T = 60.0
+    T = 120.0
 
     state = State(x=x0, y=y0, yaw=0.0, v=0.0)
 
@@ -124,6 +130,7 @@ def main():
     yaw = [state.yaw]
     v = [state.v]
     t = [0.0]
+
     target_ind = calc_target_index(state, cx, cy)
 
     while T >= time and lastIndex > target_ind:
