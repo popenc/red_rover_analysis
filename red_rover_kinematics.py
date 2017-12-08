@@ -123,6 +123,41 @@ class RoverModel(object):
             return None
 
 
+    def calc_target_index(self, state, cx, cy):
+        dx = [state.x - icx for icx in cx]
+        dy = [state.y - icy for icy in cy]
+
+        d = [abs(math.sqrt(idx ** 2 + idy ** 2)) for (idx, idy) in zip(dx, dy)]
+
+        ind = d.index(min(d))
+
+        L = 0.0
+
+        while Lf > L and (ind + 1) < len(cx):
+            dx = cx[ind + 1] - cx[ind]
+            dy = cx[ind + 1] - cx[ind]
+            L += math.sqrt(dx ** 2 + dy ** 2)
+            ind += 1
+
+        return ind
+
+
+    def find_closest_point(self, state, cx, cy)
+        """
+        Finds closest point from rover in the path;
+        this is the initial point the rover drives to.
+        """
+
+        dx = [state.x - icx for icx in cx]
+        dy = [state.y - icy for icy in cy]
+
+        d = [abs(math.sqrt(idx ** 2 + idy ** 2)) for (idx, idy) in zip(dx, dy)]
+
+        ind = d.index(min(d))  # index of the point closest to the rover
+
+        return ind
+
+
     # def plot_turn(self, radius):
     #   """
     #   Plots the turn radius

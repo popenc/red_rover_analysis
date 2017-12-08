@@ -18,8 +18,9 @@ import matplotlib.pyplot as plt
 Kp = 1.0  # speed propotional gain
 # Lf = 1.0  # look-ahead distance
 # Lf = 0.01
-Lf = 1.2
+# Lf = 1.2
 # Lf = 2.0
+Lf = 3.0
 
 
 
@@ -96,7 +97,8 @@ def calc_target_index(state, cx, cy):
 
     while Lf > L and (ind + 1) < len(cx):
         dx = cx[ind + 1] - cx[ind]
-        dy = cx[ind + 1] - cx[ind]
+        # dy = cx[ind + 1] - cx[ind]  # this is the original line
+        dy = cy[ind + 1] - cy[ind]  # this is my speculated correction (tested: this actually looks like the right way to go)
         L += math.sqrt(dx ** 2 + dy ** 2)
         ind += 1
 
@@ -107,10 +109,11 @@ def main():
 
     #  target course
     # cy = np.arange(0, 50, 0.1)
-    # cx = [0.1*(np.random.random() - 0.5) for ix in cy]
+    cy = np.arange(0, 20, 5)
+    cx = [0.1*(np.random.random() - 0.5) for iy in cy]
 
-    cx = [10.0 * math.cos(ix) for ix in np.arange(0, 10, 0.1)]
-    cy = [10.0 * math.sin(iy) for iy in np.arange(0, 10, 0.1)]
+    # cx = [10.0 * math.cos(ix) for ix in np.arange(0, 10, 0.1)]
+    # cy = [10.0 * math.sin(iy) for iy in np.arange(0, 10, 0.1)]
 
     print("x: {}".format(cx))
     print("y: {}".format(cy))
@@ -123,7 +126,8 @@ def main():
 
     # T = 30.0  # max simulation time
     # T = 60.0
-    T = 120.0
+    # T = 120.0
+    T = 300
 
     state = State(x=x0, y=y0, yaw=0.0, v=0.0)
 
@@ -154,7 +158,8 @@ def main():
 
     flg, ax = plt.subplots(1)
     plt.plot(cx, cy, ".r", label="course")
-    plt.plot(x, y, "-b", label="trajectory")
+    # plt.plot(x, y, "-b", label="trajectory")  # plots a blue line that's the rover path
+    plt.plot(x, y, "bo", label="trajector")
     plt.legend()
     plt.xlabel("x[m]")
     plt.ylabel("y[m]")
