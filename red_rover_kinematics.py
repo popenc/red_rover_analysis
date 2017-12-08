@@ -118,78 +118,7 @@ class RoverKinematics(object):
 		plt.show()
 
 
-	# def build_turn_plot_data(self, plot_data):
 
-	# 	_refs_list = plot_data.get('ref_pos_list', [])
-	# 	# _theta = np.linspace(0, 2*np.pi, 100)
-	# 	_turn_plots = []  # list of [x,y] for plotting turns
-
-	# 	for i in range(0, len(_refs_list) - 1):
-
-	# 		_ref1 = _refs_list[i]  # initial position [x,y]
-	# 		_ref2 = _refs_list[i + 1]  # destination position [x,y]
-	# 		_radius = plot_data['radius_list'][i]
-	# 		_turn = None
-
-	# 		if plot_data['direction_list'][i] == "left":
-	# 			# _xturn = plot_data['radius_list'][i] * np.cos(theta) - plot_data['radius_list'][i]
-	# 			_turn = plt.Circle((_ref1[0] - _radius, _ref1[1]), _radius, color='g', fill=False)
-	# 		elif plot_data['direction_list'][i] == "right":
-	# 			_turn = plt.Circle((_ref1[0] + _radius, _ref1[1]), _radius, color='g', fill=False)
-	# 			# _xturn = plot_data['radius_list'][i] * np.cos(theta) + plot_data['radius_list'][i]
-
-	# 		_turn_plots.append(_turn)
-
-	# 	return _turn_plots
-
-
-	# def plot_turn_to_ref(self, plot_data):
-	# 	"""
-	# 	Plots rover as dot, ref point, then turn
-	# 	radius rover takes to ref point.
-	# 	"""
-
-	# 	_refs_list = plot_data.get('ref_pos_list', [])
-
-	# 	ax = plt.gca()  # get axes instance from plot
-	# 	_xref_array, _yref_array = [], []
-
-	# 	_turn_plots = self.build_turn_plot_data(plot_data)
-
-	# 	for _turn in _turn_plots:
-	# 		ax.add_patch(_turn)  # adding turns to plot
-
-	# 	for ref_pair in _refs_list[1:]:
-	# 		# loop ref points, skipping rover position
-
-	# 		# Building reference points plot arrays ([x1,x2,..], [y1,y2,..]):
-	# 		_xref_array.append(ref_pair[0])
-	# 		_yref_array.append(ref_pair[1])
-
-	# 		# Creating look-adhead radius around ref point: 
-	# 		_halo = plt.Circle((ref_pair[0], ref_pair[1]), self.look_ahead_radius, color='b', fill=False, linestyle='dashed')
-	# 		ax.add_patch(_halo)
-
-	# 	plt.plot(
-	# 		[_refs_list[0][0]], [_refs_list[0][1]], 'rs',  # plots rover position
-	# 		_xref_array, _yref_array, 'bo',  # plots reference points
-	# 		plot_data.get('x_turn'), plot_data.get('y_turn'),  # plots first turn radius
-	# 	)
-
-	# 	plt.axis([self.graph_xmin, self.graph_xmax, self.graph_ymin, self.graph_ymax])
-	# 	plt.grid(True)
-	# 	plt.show()
-
-	# 	return
-
-
-	def initiate_point_follow(self, plot_data):
-		"""
-		Begins looping through the points for the rover to follow
-		"""
-		
-
-		
 
 
 
@@ -273,15 +202,16 @@ if __name__ == '__main__':
 
 		print("Plot data: {}".format(_plot_data))
 
-		ax = plt.gca()
-		_projected_path = plt.Circle((_path, _ref1[1]), _radius, color='b', fill=False, linestyle='dashed')
-		ax.add_patch(_projected_path)
+		# Plots radii of turns:
+		# ax = plt.gca()
+		# _projected_path = plt.Circle((_path, _ref1[1]), _radius, color='b', fill=False, linestyle='dashed')
+		# ax.add_patch(_projected_path)
 
 	plt.plot(
 		_rover_pos[0], _rover_pos[1], 'rs',
 		# _end_pos[0], _end_pos[1], 'go',
 		_xrefs, _yrefs, 'go',
-		_x_path, _y_path, 'bo'	  # plots reference points
+		_x_path, _y_path, 'b-'	  # plots reference points
 	)
 
 	plt.axis([_rover.graph_xmin, _rover.graph_xmax, _rover.graph_ymin, _rover.graph_ymax])

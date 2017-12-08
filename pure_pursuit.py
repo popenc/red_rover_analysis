@@ -61,12 +61,15 @@ def pure_pursuit_control(state, cx, cy, pind):
     ind = calc_target_index(state, cx, cy)
 
     if pind >= ind:
+        # use prev ind if prev ind >= ind
         ind = pind
 
     if ind < len(cx):
+        # set tx ty to x,y of current path
         tx = cx[ind]
         ty = cy[ind]
     else:
+        # if ind beyond path, go to last point in path
         tx = cx[-1]
         ty = cy[-1]
         ind = len(cx) - 1
@@ -115,7 +118,8 @@ def main():
     x0 = -11.0  # initial rover xpos
     y0 = -11.0  # initial rover ypos
 
-    target_speed = 1.6  # i think it's in km/h, so 1.6km/h is ~1mph
+    # target_speed = 1.6  # i think it's in km/h, so 1.6km/h is ~1mph
+    target_speed = 0.447  # 1mph in m/s
 
     # T = 30.0  # max simulation time
     # T = 60.0
@@ -158,9 +162,10 @@ def main():
     plt.grid(True)
 
     flg, ax = plt.subplots(1)
-    plt.plot(t, [iv * 3.6 for iv in v], "-r")
+    # plt.plot(t, [iv * 3.6 for iv in v], "-r")
+    plt.plot(t, v, "-r")
     plt.xlabel("Time[s]")
-    plt.ylabel("Speed[km/h]")
+    plt.ylabel("Speed[m/s]")
     plt.grid(True)
     plt.show()
 
