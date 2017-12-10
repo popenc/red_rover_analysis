@@ -12,28 +12,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import numpy as np
 import sys
-
-
-
-class State:
-
-    def __init__(self, x=0.0, y=0.0, yaw=0.0, v=0.0):
-        self.dt = 0.1  # [s]
-        self.L = 2.9  # [m]
-        self.x = x
-        self.y = y
-        self.yaw = yaw
-        self.v = v
-
-
-    def update(self, state, a, delta):
-
-        state.x = state.x + state.v * math.cos(state.yaw) *self.dt
-        state.y = state.y + state.v * math.sin(state.yaw) *self.dt
-        state.yaw = state.yaw + state.v / self.L * math.tan(delta) *self.dt
-        state.v = state.v + a *self.dt
-
-        return state
+import pure_pursuit
 
 
 
@@ -104,7 +83,7 @@ class RoverModel(object):
     def determine_turn_direction(self, rover_pos, ref_pos):
         """
         Determines if rover should turn left or right
-        based on it's position relative to a reference point.
+        based on it's position relative to as reference point.
         """
 
         # initial algorithm not using coords or utm, just
@@ -123,26 +102,7 @@ class RoverModel(object):
             return None
 
 
-    def calc_target_index(self, state, cx, cy):
-        dx = [state.x - icx for icx in cx]
-        dy = [state.y - icy for icy in cy]
-
-        d = [abs(math.sqrt(idx ** 2 + idy ** 2)) for (idx, idy) in zip(dx, dy)]
-
-        ind = d.index(min(d))
-
-        L = 0.0
-
-        while Lf > L and (ind + 1) < len(cx):
-            dx = cx[ind + 1] - cx[ind]
-            dy = cx[ind + 1] - cx[ind]
-            L += math.sqrt(dx ** 2 + dy ** 2)
-            ind += 1
-
-        return ind
-
-
-    def find_closest_point(self, state, cx, cy)
+    def find_closest_point(self, state, cx, cy):
         """
         Finds closest point from rover in the path;
         this is the initial point the rover drives to.
@@ -189,6 +149,8 @@ if __name__ == '__main__':
     _rover_pos = [2, 3]  # Assuming rover at 0,0
     # _ref_pos_list = [[5, 6], [6, 10], [5.5, 15]]  # now trying two hardcoded ref points - beginnings of straight line
     _ref_pos_list = [[6,15], [6.1, 25]]
+    cx = [6, 6.1]
+    cy = [15, 25]
 
     _rover = RoverModel()
 
@@ -209,155 +171,107 @@ if __name__ == '__main__':
 
 
 
-    # target_speed = 0.447  # 1mph in m/s
+    target_speed = 0.447  # 1mph in m/s
 
-    # T = 60.0  # max simulation time
+    T = 60.0  # max simulation time
 
-    # state = State(x=x0, y=y0, yaw=0.0, v=0.0)
+    state = pure_pursuit.State(x=_rover_pos[0], y=_rover_pos[1], yaw=0.0, v=0.0)
 
-    # lastIndex = len(cx) - 1
-    # time = 0.0
-    # x = [state.x]
-    # y = [state.y]
-    # yaw = [state.yaw]
-    # v = [state.v]
-    # t = [0.0]
+    lastIndex = len(cx) - 1
+    time = 0.0
+    x = [state.x]
+    y = [state.y]
+    yaw = [state.yaw]
+    v = [state.v]
+    t = [0.0]
 
-    # target_ind = calc_target_index(state, cx, cy)
+    target_ind = pure_pursuit.calc_target_index(state, cx, cy)
 
-    # while T >= time and lastIndex > target_ind:
+    while T >= time and lastIndex > target_ind:
 
-    #     ai = PIDControl(target_speed, state.v)
-    #     di, target_ind = pure_pursuit_control(state, cx, cy, target_ind)
-    #     state = state.update(state, ai, di)
+        ai = pure_pursuit.PIDControl(target_speed, state.v)
+        di, target_ind = pure_pursuit.pure_pursuit_control(state, cx, cy, target_ind)
+        state = state.update(state, ai, di)
 
-    #     time = time + state.dt
+        time = time + state.dt
 
-    #     x.append(state.x)
-    #     y.append(state.y)
-    #     yaw.append(state.yaw)
-    #     v.append(state.v)
-    #     t.append(time)
+        x.append(state.x)
+        y.append(state.y)
+        yaw.append(state.yaw)
+        v.append(state.v)
+        t.append(time)
+
+    pure_pursuit.make_plot(cx, cy, x, y, t, v)
 
 
+    # # Looping reference points:
+    # for i in range(0, len(_ref_pos_list) - 1):
 
+    #     _ref1 = _ref_pos_list[i]
+    #     _ref2 = _ref_pos_list[i + 1]
 
-    # Looping reference points:
-    for i in range(0, len(_ref_pos_list) - 1):
+    #     _xrefs.append(_ref2[0])  # start at ref2 since 1st point is rover
+    #     _yrefs.append(_ref2[1])
+    #     # _xrefs.append(_ref1[0])  # trying to start at rover pos
+    #     # _yrefs.append(_ref1[1])
 
-        _ref1 = _ref_pos_list[i]
-        _ref2 = _ref_pos_list[i + 1]
+    #     _direction = _rover.determine_turn_direction(_ref1, _ref2)  # determine turn direction to ref point
+    #     _radius = _rover.calculate_radius(_ref1, _ref2)  # calculate turn radius to ref point
 
-        _xrefs.append(_ref2[0])  # start at ref2 since 1st point is rover
-        _yrefs.append(_ref2[1])
-        # _xrefs.append(_ref1[0])  # trying to start at rover pos
-        # _yrefs.append(_ref1[1])
+    #     # Have to calculate d before _angle above!!!
+    #     _d = np.sqrt((_ref2[0] - _ref1[0])**2 + (_ref2[1] - _ref1[1])**2)
+    #     _angle = _rover.calculate_angle(_radius, _d)  # calculate initial angle
 
-        _direction = _rover.determine_turn_direction(_ref1, _ref2)  # determine turn direction to ref point
-        _radius = _rover.calculate_radius(_ref1, _ref2)  # calculate turn radius to ref point
+    #     print("Calculated distance b/w points: {}".format(_d))
+    #     print("Calulated angle: {}".format(_angle))
+    #     print("Initial position: {}".format(_rover_pos))
+    #     print("Ref points: {}".format(_ref_pos_list))
+    #     print("Direction for turn 1: {} \nRadius: {} \nAngle: {}".format(_direction, _radius, _angle))
+    #     print("Incrementing angles by: {} degrees".format(_angle / _rover.angle_increment))
 
-        # Have to calculate d before _angle above!!!
-        _d = np.sqrt((_ref2[0] - _ref1[0])**2 + (_ref2[1] - _ref1[1])**2)
-        _angle = _rover.calculate_angle(_radius, _d)  # calculate initial angle
+    #     # Initial position:
+    #     _x = _ref1[0]
+    #     _y = _ref1[1]
 
-        print("Calculated distance b/w points: {}".format(_d))
-        print("Calulated angle: {}".format(_angle))
-        print("Initial position: {}".format(_rover_pos))
-        print("Ref points: {}".format(_ref_pos_list))
-        print("Direction for turn 1: {} \nRadius: {} \nAngle: {}".format(_direction, _radius, _angle))
-        print("Incrementing angles by: {} degrees".format(_angle / _rover.angle_increment))
+    #     # for i in range(1, _rover.angle_increment):
+    #     for i in range(0, _rover.angle_increment + 1):
 
-        # Initial position:
-        _x = _ref1[0]
-        _y = _ref1[1]
+    #         _bin = i * (_angle / _rover.angle_increment)
 
-        # for i in range(1, _rover.angle_increment):
-        for i in range(0, _rover.angle_increment + 1):
+    #         print("angle: {}".format(_bin))
 
-            _bin = i * (_angle / _rover.angle_increment)
-
-            print("angle: {}".format(_bin))
-
-            _x, _path = None, None
-            if _direction == "right":
-                _x = - _radius * np.cos(_bin) + _radius + _ref1[0]
-                _path = _ref1[0] + _radius
-            elif _direction == "left":
-                _x = _radius * np.cos(_bin) - _radius + _ref1[0]
-                _path = _ref1[0] - _radius
+    #         _x, _path = None, None
+    #         if _direction == "right":
+    #             _x = - _radius * np.cos(_bin) + _radius + _ref1[0]
+    #             _path = _ref1[0] + _radius
+    #         elif _direction == "left":
+    #             _x = _radius * np.cos(_bin) - _radius + _ref1[0]
+    #             _path = _ref1[0] - _radius
             
-            _y = _radius * np.sin(_bin) + _ref1[1]
+    #         _y = _radius * np.sin(_bin) + _ref1[1]
 
-            _plot_data['direction_list'].append(_direction)
-            _plot_data['radius_list'].append(_radius)
-            _plot_data['angle_list'].append(_angle)
+    #         _plot_data['direction_list'].append(_direction)
+    #         _plot_data['radius_list'].append(_radius)
+    #         _plot_data['angle_list'].append(_angle)
 
-            _plot_data['path'].append([_x, _y])
-            _x_path.append(_x)
-            _y_path.append(_y)
+    #         _plot_data['path'].append([_x, _y])
+    #         _x_path.append(_x)
+    #         _y_path.append(_y)
 
-        print("Plot data: {}".format(_plot_data))
+    #     print("Plot data: {}".format(_plot_data))
 
-        # Plots radii of turns:
-        # ax = plt.gca()
-        # _projected_path = plt.Circle((_path, _ref1[1]), _radius, color='b', fill=False, linestyle='dashed')
-        # ax.add_patch(_projected_path)
+    #     # Plots radii of turns:
+    #     # ax = plt.gca()
+    #     # _projected_path = plt.Circle((_path, _ref1[1]), _radius, color='b', fill=False, linestyle='dashed')
+    #     # ax.add_patch(_projected_path)
 
-    plt.plot(
-        _x_path, _y_path, 'b-',   # plots reference points
-        _x_path, _y_path, 'bo',
-        _xrefs, _yrefs, 'go',
-        _rover_pos[0], _rover_pos[1], 'rs',
-    )
+    # plt.plot(
+    #     _x_path, _y_path, 'b-',   # plots reference points
+    #     _x_path, _y_path, 'bo',
+    #     _xrefs, _yrefs, 'go',
+    #     _rover_pos[0], _rover_pos[1], 'rs',
+    # )
 
-    plt.axis([_rover.graph_xmin, _rover.graph_xmax, _rover.graph_ymin, _rover.graph_ymax])
-    plt.grid(True)
-    plt.show()
-
-
-
-
-
-##### This is from pure_pursuit. Comparing that code with the code I originally #############
-##### started working on that's based off the paper: "Evaluation of simple pure pursuit #####
-##### path-following algorithm for an autonomous articulated-steer vehicle" #################
-# def main():
-
-#     cx = [10.0 * math.cos(ix) for ix in np.arange(0, 10, 0.1)]
-#     cy = [10.0 * math.sin(iy) for iy in np.arange(0, 10, 0.1)]
-
-#     print("x: {}".format(cx))
-#     print("y: {}".format(cy))
-
-#     x0 = -11.0  # initial rover xpos
-#     y0 = -11.0  # initial rover ypos
-
-#     target_speed = 0.447  # 1mph in m/s
-
-#     T = 60.0  # max simulation time
-
-#     state = State(x=x0, y=y0, yaw=0.0, v=0.0)
-
-#     lastIndex = len(cx) - 1
-#     time = 0.0
-#     x = [state.x]
-#     y = [state.y]
-#     yaw = [state.yaw]
-#     v = [state.v]
-#     t = [0.0]
-
-#     target_ind = calc_target_index(state, cx, cy)
-
-#     while T >= time and lastIndex > target_ind:
-
-#         ai = PIDControl(target_speed, state.v)
-#         di, target_ind = pure_pursuit_control(state, cx, cy, target_ind)
-#         state = state.update(state, ai, di)
-
-#         time = time + state.dt
-
-#         x.append(state.x)
-#         y.append(state.y)
-#         yaw.append(state.yaw)
-#         v.append(state.v)
-#         t.append(time)
+    # plt.axis([_rover.graph_xmin, _rover.graph_xmax, _rover.graph_ymin, _rover.graph_ymax])
+    # plt.grid(True)
+    # plt.show()

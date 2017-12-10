@@ -91,18 +91,43 @@ def calc_target_index(state, cx, cy):
 
     d = [abs(math.sqrt(idx ** 2 + idy ** 2)) for (idx, idy) in zip(dx, dy)]
 
-    ind = d.index(min(d))
+    ind = d.index(min(d))  # index of point closest to rover's current position
 
     L = 0.0
-
     while Lf > L and (ind + 1) < len(cx):
+        # Sums distance b/w rover and path points until it's greater
+        # than the look-ahead distance
         dx = cx[ind + 1] - cx[ind]
         # dy = cx[ind + 1] - cx[ind]  # this is the original line
         dy = cy[ind + 1] - cy[ind]  # this is my speculated correction (tested: this actually looks like the right way to go)
         L += math.sqrt(dx ** 2 + dy ** 2)
         ind += 1
 
+    print("Target index: {}".format(ind))
+
     return ind
+
+
+def make_plot(cx, cy, x, y, t, v):
+
+    flg, ax = plt.subplots(1)
+    plt.plot(cx, cy, ".r", label="course")
+    # plt.plot(x, y, "-b", label="trajectory")  # plots a blue line that's the rover path
+    plt.plot(x, y, "bo", label="trajector")
+    plt.legend()
+    plt.xlabel("x[m]")
+    plt.ylabel("y[m]")
+    plt.axis("equal")
+    plt.grid(True)
+
+    # flg, ax = plt.subplots(1)
+    # # plt.plot(t, [iv * 3.6 for iv in v], "-r")
+    # plt.plot(t, v, "-r")
+    # plt.xlabel("Time[s]")
+    # plt.ylabel("Speed[m/s]")
+    # plt.grid(True)
+
+    plt.show()
 
 
 def main():
