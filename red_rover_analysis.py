@@ -300,17 +300,20 @@ if __name__ == '__main__':
 		_csv_data = gps_plot.upload_csv(gps_plot.filename)  # upload csv data of filename
 		_func = sys.argv[4]
 
-		_axes_range = [None, None, None, None]  # [xmin, xmax, ymin, ymax]
+		# _axes_range = [None, None, None, None]  # [xmin, xmax, ymin, ymax]
+		_axes_range = []
 
 		# check for provided range (todo: handle Nones):
 		if len(sys.argv) > 5:
 			# assuming x/y min/max ranges are set..
-			_axes_range[0] = sys.argv[5]
-			_axes_range[1] = sys.argv[6]
-			_axes_range[2] = sys.argv[7]
-			_axes_range[3] = sys.argv[8]
+			_axes_range.append(sys.argv[5])
+			_axes_range.append(sys.argv[6])
+			_axes_range.append(sys.argv[7])
+			_axes_range.append(sys.argv[8])
 			print("Axes range: {}".format(_axes_range))
 
+
+		print("Requested function: {}".format(_func))
 
 
 		if _func == 'utm_csv':
@@ -322,13 +325,13 @@ if __name__ == '__main__':
 		# plot xheader col vs yheader col:
 		elif _func == 'plotxy':
 
-			if _axes_range[0] != 'None' and _axes_range[1] != 'None':
-				# plt.axes().set_xlim(float(_axes_range[0]), float(_axes_range[1]))
-				# TODO: Not always float for conversion!!!
+			print("entering plotxy function..")
+			print("Axes range: {}".format(_axes_range))
+
+			if _axes_range and len(_axes_range) == 4:
 				plt.xlim(float(_axes_range[0]), float(_axes_range[1]))
 				print("set x range from {} to {}".format(_axes_range[0], _axes_range[1]))
-			if _axes_range[2] != 'None' and _axes_range[3] != 'None':
-				# plt.axes().set_ylim(_axes_range[2], _axes_range[3])
+
 				plt.ylim(float(_axes_range[2]), float(_axes_range[3]))
 				print("set y range from {} to {}".format(_axes_range[2], _axes_range[3]))
 

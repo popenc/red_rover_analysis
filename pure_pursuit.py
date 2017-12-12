@@ -13,22 +13,11 @@ named PythonRobotics. (27 Nov. 2017; NP)
 import numpy as np
 import math
 import matplotlib.pyplot as plt
-# import unicycle_model
-
-Kp = 1.0  # speed propotional gain
-# Lf = 1.0  # look-ahead distance
-# Lf = 0.01
-# Lf = 1.2
-# Lf = 2.0
-Lf = 3.0
 
 
 
-#  animation = True
-animation = False
 
-
-class State:
+class State(object):
 
     def __init__(self, x=0.0, y=0.0, yaw=0.0, v=0.0):
         self.dt = 0.1  # [s]
@@ -51,130 +40,71 @@ class State:
 
 
 
-def PIDControl(target, current):
-    a = Kp * (target - current)
+class PurePursuitModel(object):
+    """
+    "Classifying" the pure pursuit model to be used
+    by the red rover model
+    """
+    def __init__(self, Lf=1.0, Kp=1.0):
 
-    return a
-
-
-def pure_pursuit_control(state, cx, cy, pind):
-
-    ind = calc_target_index(state, cx, cy)
-
-    if pind >= ind:
-        # use prev ind if prev ind >= ind
-        ind = pind
-
-    if ind < len(cx):
-        # set tx ty to x,y of current path
-        tx = cx[ind]
-        ty = cy[ind]
-    else:
-        # if ind beyond path, go to last point in path
-        tx = cx[-1]
-        ty = cy[-1]
-        ind = len(cx) - 1
-
-    alpha = math.atan2(ty - state.y, tx - state.x) - state.yaw
-
-    if state.v < 0:  # backward?
-        alpha = math.pi - alpha
-
-    delta = math.atan2(2.0 * state.L * math.sin(alpha) / Lf, 1.0)
-
-    return delta, ind
+        self.Kp = Kp  # speed propotional gain
+        self.Lf = Lf  # look-ahead distance
+        self.animation = False
 
 
-def calc_target_index(state, cx, cy):
-    dx = [state.x - icx for icx in cx]
-    dy = [state.y - icy for icy in cy]
 
-    d = [abs(math.sqrt(idx ** 2 + idy ** 2)) for (idx, idy) in zip(dx, dy)]
+    def PIDControl(self, target, current):
+        a = self.Kp * (target - current)
 
-    ind = d.index(min(d))
-
-    L = 0.0
-
-    while Lf > L and (ind + 1) < len(cx):
-        dx = cx[ind + 1] - cx[ind]
-        # dy = cx[ind + 1] - cx[ind]  # this is the original line
-        dy = cy[ind + 1] - cy[ind]  # this is my speculated correction (tested: this actually looks like the right way to go)
-        L += math.sqrt(dx ** 2 + dy ** 2)
-        ind += 1
-
-    return ind
+        return a
 
 
-def main():
+    def pure_pursuit_control(self, state, cx, cy, pind):
 
-    #  target course
-    # cy = np.arange(0, 50, 0.1)
-    cy = np.arange(0, 20, 5)
-    cx = [0.1*(np.random.random() - 0.5) for iy in cy]
+        ind = self.calc_target_index(state, cx, cy)
 
-    # cx = [10.0 * math.cos(ix) for ix in np.arange(0, 10, 0.1)]
-    # cy = [10.0 * math.sin(iy) for iy in np.arange(0, 10, 0.1)]
+        if pind >= ind:
+            # use prev ind if prev ind >= ind
+            ind = pind
 
-    print("x: {}".format(cx))
-    print("y: {}".format(cy))
+        if ind < len(cx):
+            # set tx ty to x,y of current path
+            tx = cx[ind]
+            ty = cy[ind]
+        else:
+            # if ind beyond path, go to last point in path
+            tx = cx[-1]
+            ty = cy[-1]
+            ind = len(cx) - 1
 
-    x0 = -11.0  # initial rover xpos
-    y0 = -11.0  # initial rover ypos
+        alpha = math.atan2(ty - state.y, tx - state.x) - state.yaw
 
-    # target_speed = 1.6  # i think it's in km/h, so 1.6km/h is ~1mph
-    target_speed = 0.447  # 1mph in m/s
+        if state.v < 0:  # backward?
+            alpha = math.pi - alpha
 
-    # T = 30.0  # max simulation time
-    # T = 60.0
-    # T = 120.0
-    T = 300
+        delta = math.atan2(2.0 * state.L * math.sin(alpha) / self.Lf, 1.0)
 
-    state = State(x=x0, y=y0, yaw=0.0, v=0.0)
-
-    lastIndex = len(cx) - 1
-    time = 0.0
-    x = [state.x]
-    y = [state.y]
-    yaw = [state.yaw]
-    v = [state.v]
-    t = [0.0]
-
-    target_ind = calc_target_index(state, cx, cy)
-
-    while T >= time and lastIndex > target_ind:
-
-        ai = PIDControl(target_speed, state.v)
-        di, target_ind = pure_pursuit_control(state, cx, cy, target_ind)
-        state = state.update(state, ai, di)
-
-        time = time + state.dt
-
-        x.append(state.x)
-        y.append(state.y)
-        yaw.append(state.yaw)
-        v.append(state.v)
-        t.append(time)
+        return delta, ind
 
 
-    flg, ax = plt.subplots(1)
-    plt.plot(cx, cy, ".r", label="course")
-    # plt.plot(x, y, "-b", label="trajectory")  # plots a blue line that's the rover path
-    plt.plot(x, y, "bo", label="trajector")
-    plt.legend()
-    plt.xlabel("x[m]")
-    plt.ylabel("y[m]")
-    plt.axis("equal")
-    plt.grid(True)
+    def calc_target_index(self, state, cx, cy):
+        dx = [state.x - icx for icx in cx]
+        dy = [state.y - icy for icy in cy]
 
-    flg, ax = plt.subplots(1)
-    # plt.plot(t, [iv * 3.6 for iv in v], "-r")
-    plt.plot(t, v, "-r")
-    plt.xlabel("Time[s]")
-    plt.ylabel("Speed[m/s]")
-    plt.grid(True)
-    plt.show()
+        d = [abs(math.sqrt(idx ** 2 + idy ** 2)) for (idx, idy) in zip(dx, dy)]
 
+        ind = d.index(min(d))
 
-if __name__ == '__main__':
-    print("Pure pursuit path tracking simulation start")
-    main()
+        L = 0.0
+
+        while self.Lf > L and (ind + 1) < len(cx):
+            dx = cx[ind + 1] - cx[ind]
+            # dy = cx[ind + 1] - cx[ind]  # this is the original line
+            dy = cy[ind + 1] - cy[ind]  # this is my speculated correction (tested: this actually looks like the right way to go)
+            L += math.sqrt(dx ** 2 + dy ** 2)
+            print("Distance b/w points: {}".format(L))
+            ind += 1
+
+        print("Target index: {}".format(ind))
+
+        return ind
