@@ -19,7 +19,6 @@ from pure_pursuit import State, PurePursuitModel
 
 
 
-
 class RoverModel(object):
     """
     Building a path-following algorithm, starting simple as possible
@@ -94,7 +93,7 @@ class RoverModel(object):
     def determine_turn_direction(self, rover_pos, ref_pos):
         """
         Determines if rover should turn left or right
-        based on it's position relative to a reference point.
+        based on it's position relative to as reference point.
         """
 
         # initial algorithm not using coords or utm, just
@@ -166,7 +165,6 @@ def run_red_rover_model(Lf):
     Incrementing lookahead for testing, saving plots of pngs
     """
 
-
     # Lf = 1.0  # rover's look-ahead distance
     Lf = 0.5
     T = 1200.0  # total time of model
@@ -184,7 +182,6 @@ def run_red_rover_model(Lf):
     rover_model = RoverModel(x0, y0, Lf, T, V)  # initialize rover model
     pure_pursuit_model = PurePursuitModel(Lf, Kp)  # initialize pure pursuit model
     state = State(x=x0, y=y0, yaw=0.0, v=0.0)  # initialize current state of rover
-
 
     lastIndex = len(cx) - 1
     time = 0.0
@@ -364,6 +361,5 @@ if __name__ == '__main__':
     # plt.xlabel("Time[s]")
     # plt.ylabel("Speed[m/s]")
     # plt.grid(True)
-
 
     # plt.show()

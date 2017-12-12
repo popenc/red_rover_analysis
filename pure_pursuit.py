@@ -55,7 +55,6 @@ class PurePursuitModel(object):
 
     def PIDControl(self, target, current):
         a = self.Kp * (target - current)
-
         return a
 
 
