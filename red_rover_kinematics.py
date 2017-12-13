@@ -167,7 +167,9 @@ def run_red_rover_model(Lf):
 
     # Lf = 1.0  # rover's look-ahead distance
     Lf = 0.5
-    T = 1200.0  # total time of model
+    # T = 1200.0  # total time of model
+    # T = 2400
+    T = 10000
     V = 0.447  # rover's target velocity
     Kp = 1.0  # proportional gain for rover's velocity
 

@@ -20,7 +20,8 @@ import matplotlib.pyplot as plt
 class State(object):
 
     def __init__(self, x=0.0, y=0.0, yaw=0.0, v=0.0):
-        self.dt = 0.1  # [s]
+        # self.dt = 0.1  # [s]
+        self.dt = 0.2
         self.L = 2.9  # [m]
         self.x = x
         self.y = y
