@@ -166,10 +166,10 @@ def run_red_rover_model(Lf):
     """
 
     # Lf = 1.0  # rover's look-ahead distance
-    Lf = 0.5
+    # Lf = 0.5
     # T = 1200.0  # total time of model
     # T = 2400
-    T = 10000
+    T = 6000
     V = 0.447  # rover's target velocity
     Kp = 1.0  # proportional gain for rover's velocity
 
@@ -255,14 +255,14 @@ def run_red_rover_model(Lf):
     #                                    interval=50, blit=True)
 
 
-    flg, ax = plt.subplots(1)
-    plt.plot(t, v, "-r")
-    plt.xlabel("Time[s]")
-    plt.ylabel("Speed[m/s]")
-    plt.grid(True)
+    # flg, ax = plt.subplots(1)
+    # plt.plot(t, v, "-r")
+    # plt.xlabel("Time[s]")
+    # plt.ylabel("Speed[m/s]")
+    # plt.grid(True)
 
-    plt.show()
-    # # plt.savefig('Plots/path_follow_20171212_{}.png'.format(Lf))
+    # plt.show()
+    plt.savefig('Plots/path_follow_20171214_{}.png'.format(Lf))
 
 
 
@@ -276,11 +276,12 @@ if __name__ == '__main__':
     Plots two graphs: position vs time, and vecolity vs time
     """
 
-    # for i in range(1, 350, 5):
-    #     Lf = i / 1000.0  # incrementing look ahead
-    #     run_red_rover_model(Lf)
+    for i in range(1, 10, 1):
+        Lf = i / 10.0  # incrementing look ahead
+        print ("Running red rover model with look-ahead of {}".format(Lf))
+        run_red_rover_model(Lf)
 
-    run_red_rover_model(1.0)
+    # run_red_rover_model(1.0)
 
 
     # Straight line course:
