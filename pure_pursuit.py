@@ -20,8 +20,7 @@ import matplotlib.pyplot as plt
 class State(object):
 
     def __init__(self, x=0.0, y=0.0, yaw=0.0, v=0.0):
-        # self.dt = 0.1  # [s]
-        self.dt = 0.2
+        self.dt = 0.2  # time step for model [s]
         self.L = 2.9  # [m]
         self.x = x
         self.y = y
@@ -108,3 +107,18 @@ class PurePursuitModel(object):
         print("Target index: {}".format(ind))
 
         return ind
+
+
+    def check_index_slope(self, max_slope=1000):
+        """
+        Determine if rover is heading down the
+        correct path at a GPS path intersection.
+        """
+        
+
+
+    def find_closer_point(self):
+        """
+        Search for next closest point if the 
+        max index slope is exceeded.
+        """
