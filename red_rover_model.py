@@ -72,7 +72,7 @@ class RoverModel(object):
 
     def calculate_rover_pivot(self, radius, direction):
         """
-        Calculates angle based on turn equation and direction
+        Calculates angle based on turn equation and direction.
         """
         if direction == "left":
             return (self.left_a / radius)**(1.0/self.left_b)
@@ -80,6 +80,7 @@ class RoverModel(object):
             return (self.right_a / radius)**(1.0/self.right_b)
         else:
             return None
+
 
     def calculate_angle(self, radius, step_distance):
         """
@@ -121,6 +122,55 @@ class RoverModel(object):
         self.graph_xmax = x_path[-1] + ext
         self.graph_ymin = y_path[0] - ext
         self.graph_ymax = y_path[-1] + ext
+
+
+    def create_plots(self, cx, cy, x, y, t, v, yaw, ind_slope):
+        """
+        Plot rover GPS path and course, among other things.
+
+        """
+        flg, ax = plt.subplots(1)
+        plt.plot(cx, cy, ".r", label="course")
+        plt.plot(x, y, "-b", label="trajectory")  # plots a blue line that's the rover path
+        # plt.plot(x, y, "bo", label="trajectory")  # plots dots
+        plt.legend()
+        plt.xlabel("x[m]")
+        plt.ylabel("y[m]")
+        plt.axis("equal")
+        plt.grid(True)
+        self.set_graph_ranges(cx, cy, 2.5e2)  # Working full view settings
+        # self.set_graph_ranges([x0, x0], [y0, y0], 0.8e1)  # Intersection issue settings 1
+        plt.axis([self.graph_xmin, self.graph_xmax, self.graph_ymin, self.graph_ymax])
+
+        # Velocity plot stuff:
+        # flg, ax = plt.subplots(1)
+        # plt.plot(t, v, "-r")
+        # plt.xlabel("Time[s]")
+        # plt.ylabel("Speed[m/s]")
+        # plt.grid(True)
+
+        # Index slope plot stuff:
+        flg, ax = plt.subplots(1)
+        plt.plot(t, ind_slope, "-r")
+        plt.xlabel("Time[s]")
+        plt.ylabel("Index slope[m/s]")
+        plt.grid(True)
+
+        # Saving output CSV for analyzing turn position and index
+        # for path intersection problem:
+        # filename = 'Data/2018-01-15/path_cross_example_data_2.csv'
+        # save_csv_file(filename, csv_data_out)
+        # print "CSV {} saved.".format(filename)
+
+        # Saving plots as images settings:
+        # figure_name = 'path_follow_peanut_field_20180115_RSS{}.png'.format(row_step_size)
+        # print("Saving figure: {}".format(figure_name))
+        # plt.savefig('Plots/2018_01/{}'.format(figure_name))  # for plots across look-aheads
+        # print("Plot saved.")
+
+        # Display plot:
+        plt.show()
+
 
 
 def get_data_from_csv(filename, t_header, x_header, y_header, row_step_size=2):
@@ -213,10 +263,6 @@ def run_red_rover_model(Lf=0.5, row_step_size=2):
     V = 0.447  # rover's target velocity in m/s
     Kp = 1.0  # proportional gain for rover's velocity
 
-    # Gets UTM data from turn test CSV:
-    # x0, y0 = 259730.257383921, 3485055.70975021
-    # cx, cy = rover_model.get_data_from_csv('points_of_interest/turn_tests_straight_line.csv', 0, 1)
-
     x0, y0 = 259551, 3.48472e6  # Initial rover starting position (original, works)
     # x0, y0 = 259543, 3484716  # Good start position for path intersection troubleshooting
     path_filename = 'Data/2017-09-20/gps_field_test_fixtopic_20170920_reduced_utm.csv'
@@ -225,10 +271,6 @@ def run_red_rover_model(Lf=0.5, row_step_size=2):
     #                 path_filename, 'field.header.stamp', 'easting', 'northing', row_step_size)
     ci, cx, cy = get_data_from_csv(
                     path_filename, 'field.header.seq', 'easting', 'northing', row_step_size)
-
-    # temp code for looking at time diffs:
-    # get_gps_time_diffs(ct)
-    # return
 
     rover_model = RoverModel(x0, y0, Lf, T, V)  # initialize rover model
     pure_pursuit_model = PurePursuitModel(Lf, Kp)  # initialize pure pursuit model
@@ -278,49 +320,11 @@ def run_red_rover_model(Lf=0.5, row_step_size=2):
         ind_slope.append(slope_index)
         j += 1
 
-
-    flg, ax = plt.subplots(1)
-    plt.plot(cx, cy, ".r", label="course")
-    plt.plot(x, y, "-b", label="trajectory")  # plots a blue line that's the rover path
-    # plt.plot(x, y, "bo", label="trajectory")  # plots dots
-    plt.legend()
-    plt.xlabel("x[m]")
-    plt.ylabel("y[m]")
-    plt.axis("equal")
-    plt.grid(True)
-    rover_model.set_graph_ranges(cx, cy, 2.5e2)  # Working full view settings
-    # rover_model.set_graph_ranges([x0, x0], [y0, y0], 0.8e1)  # Intersection issue settings 1
-    plt.axis([rover_model.graph_xmin, rover_model.graph_xmax, rover_model.graph_ymin, rover_model.graph_ymax])
-
-    # Velocity plot stuff:
-    # flg, ax = plt.subplots(1)
-    # plt.plot(t, v, "-r")
-    # plt.xlabel("Time[s]")
-    # plt.ylabel("Speed[m/s]")
-    # plt.grid(True)
-
-    # Index slope plot stuff:
-    flg, ax = plt.subplots(1)
-    plt.plot(t, ind_slope, "-r")
-    plt.xlabel("Time[s]")
-    plt.ylabel("Index slope[m/s]")
-    plt.grid(True)
+    # Creates plots of red rover's course and path:
+    rover_model.create_plots(cx, cy, x, y, t, v, yaw, ind_slope)
 
 
-    # Saving output CSV for analyzing turn position and index
-    # for path intersection problem:
-    # filename = 'Data/2018-01-15/path_cross_example_data_2.csv'
-    # save_csv_file(filename, csv_data_out)
-    # print "CSV {} saved.".format(filename)
 
-    # Display plot:
-    plt.show()
-
-    # Saving plots as images settings:
-    # figure_name = 'path_follow_peanut_field_20180115_RSS{}.png'.format(row_step_size)
-    # print("Saving figure: {}".format(figure_name))
-    # plt.savefig('Plots/2018_01/{}'.format(figure_name))  # for plots across look-aheads
-    # print("Plot saved.")
 
 
 

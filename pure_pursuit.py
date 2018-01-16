@@ -95,14 +95,21 @@ class PurePursuitModel(object):
         ind = d.index(min(d))
 
         L = 0.0
-
         while self.Lf > L and (ind + 1) < len(cx):
             dx = cx[ind + 1] - cx[ind]
-            # dy = cx[ind + 1] - cx[ind]  # this is the original line
-            dy = cy[ind + 1] - cy[ind]  # this is my speculated correction (tested: this actually looks like the right way to go)
+            dy = cy[ind + 1] - cy[ind]
             L += math.sqrt(dx ** 2 + dy ** 2)
             print("Distance b/w points: {}".format(L))
             ind += 1
+
+
+            # 1. Check to make sure turn angle is >= min turn angle
+            
+
+            # 2. Check to make sure the index change isn't large enough to be deemed
+            # the incorrect path.
+
+
 
         print("Target index: {}".format(ind))
 
