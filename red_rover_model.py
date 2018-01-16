@@ -324,8 +324,6 @@ def run_red_rover_model(Lf=0.5, row_step_size=2):
 
 
 
-
-
 if __name__ == '__main__':
     """
     Runs the red rover pure pursuit model.
