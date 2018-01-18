@@ -19,7 +19,6 @@ import LatLon
 
 
 
-
 class GPSPlot(object):
 
 	def __init__(self):
@@ -60,7 +59,7 @@ class GPSPlot(object):
 		except Exception as e:
 			raise e
 
-	def create_csv(self, fileout):
+	def create_csv(self, fileout_name, fileout_data):
 		"""
 		Creates CSV file with self.filename + '_utm.csv' name,
 		created at location python program is executed.
@@ -69,12 +68,25 @@ class GPSPlot(object):
 			+ fileout - filename for output file
 			+ path - TODO...
 		"""
-		with open(fileout_name, 'w', newline='') as csv_file:
+		with open(fileout_name, 'w') as csv_file:
 			writer = csv.writer(csv_file)
-			writer.writerows(mod_data_list)
+			writer.writerows(fileout_data)
 		csv_file.close()
-		logging.info("file: {} created...".format(fileout))
+		# logging.info("file: {} created...".format(fileout))
 		return
+
+	def create_output_file(self, fileout_name, fileout_data):
+		"""
+		Creates general output file, whereas create_csv() is 
+		only for CSV files.
+		"""
+		with open(fileout_name, 'w') as fileout:
+			# writer = csv.writer(fileout)
+			fileout.write(fileout_data)
+		fileout.close()
+		# logging.info("file: {} created...".format(fileout))
+		return
+
 
 	def convert_latlon_to_utm(self, lat, lon):
 		"""
@@ -249,10 +261,85 @@ class GPSPlot(object):
 
 
 
-
-
-if __name__ == '__main__':
+class GPSDataHandler(GPSPlot):
 	"""
+	Originally created for making a .gpx file from a .csv of lat/lons.
+	Inherits GPSPlot initially for use of its CSV functions.
+	"""
+	def __init__(self, input_file, output_file="gpx_output.gpx"):
+		self.input_file = input_file  # input csv filename
+		self.output_file = output_file  # output gpx filename
+
+		# Template for gpx output file:
+		self.gpx_template = """
+		<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+		<gpx
+		   version="1.1"
+		   creator=""
+		   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		   xmlns="http://www.topografix.com/GPX/1/1"
+		   xsi:schemaLocation="http://www.topografix.com/GPX/1/1/gpx.xsd">
+		<metadata>
+		<name> peanut_field_latlon_only.gpx </name>
+		   <copyright author="">
+		      <year>2018</year>
+		   </copyright>
+		</metadata>
+			<rte>{}</rte>
+		</gpx>
+		"""
+		self.gpx_point = '<rtept lat="{}" lon="{}"></rtept>'  # lat/lon template for gpx point
+
+	def create_gpx_from_csv(self):
+		"""
+		Reads in CSV of lat/lons,
+		then wraps gpx tags around it,
+		finally saves it as a gpx file.
+		"""
+		# 1. Read in CSV file (returns list of lists, where lists are rows):
+		csv_data = self.upload_csv(self.input_file)
+
+		# 2. Fill in gpx template with lat/lons from CSV:
+		gpx_points = ""
+		for row in csv_data:
+			gpx_points += self.gpx_point.format(row[0], row[1])  # building string of gpx points
+		
+		# gpx_content = self.gpx_template.replace(" ", "").replace("\n", "").replace("\t", "")  # get instance of gpx template
+		# gpx_content.format(gpx_points)  # insert points into gpx template
+		gpx_content = self.gpx_template.format(gpx_points).replace("\n", "").replace("\t", "")  # get instance of gpx template
+
+		# 3. Output gpx content to output file:
+		print("Creating the following template: {}, with output file name: {}".format(gpx_content, self.output_file))
+		# self.create_csv(self.output_file, gpx_content)
+		self.create_output_file(self.output_file, gpx_content)
+		print("File created!")
+
+		return
+
+
+def main_gpx(input_file):
+	"""
+	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	Main function for creating GPX file from lat/lon CSV data
+	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	"""
+	handler = GPSDataHandler(input_file)
+
+	print("Create GPX file {} from CSV data in {}".format(handler.output_file, handler.input_file))
+
+	handler.create_gpx_from_csv()
+
+	print("GPX file successfully created!")
+
+	return
+
+
+
+def main():
+	"""
+	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	Main function for plotting GPS data, detecting peaks, etc.
+	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	If being run by user as standalone script,
 	take the following inputs:
 	e.g., python plot_lat_lon.py [filename] [xheader] [yheader] [function] [xmin, optional] [xmax, optional] [ymin, optional] [ymax, optional]
@@ -263,7 +350,6 @@ if __name__ == '__main__':
 			average min/maxes, other stats (probably).
 		+ gmap_plot - plot lat/lons on a google maps page.
 	"""
-
 	if sys.argv[2] == "to_dec":
 		gps = GPSPlot()
 		data = gps.upload_csv(sys.argv[1])
@@ -319,7 +405,7 @@ if __name__ == '__main__':
 		if _func == 'utm_csv':
 			_csv_data = gps_plot.add_utm_to_csvdata(_csv_data)
 			_fileout_name = "{}_utm.csv".format(self.filename.split(".")[0])  # filename --> inputfile + "_utm.cscv"
-			gps_plot.create_csv(_fileout_name)
+			gps_plot.create_csv(_fileout_name, _csv_data)
 			print ("file: {} created..".format(_fileout_name))
 
 		# plot xheader col vs yheader col:
@@ -374,3 +460,15 @@ if __name__ == '__main__':
 
 			plt.title("Turn Tests 10-04-2017 (5min Single Avg)")
 			plt.show()  # display plot!
+
+
+
+
+if __name__ == '__main__':
+	
+	# Run original code, plots data, reads/writes CSVs, plots/detects data min/maxes
+	# main()
+
+	# Converts CSV lat/lon file into GPX template (input: name of input file)
+	main_gpx(sys.argv[1])
+
