@@ -1,13 +1,12 @@
-% peanut_field = gpxread('/home/brad/Desktop/peanut_field_latlon_only_fixed.gpx');
-peanut_field = gpxread('/home/brad/Desktop/gpx_output.gpx');
+peanut_field = gpxread('peanut_field.gpx');
 
-states = geoshape(shaperead('usastatehi', 'UseGeoCoords', true));
-
-placenames = gpxread('boston_placenames');
-route = gpxread('sample_route.gpx');
-
-stateName = 'Massachusetts';
-ma = states(strcmp(states.Name, stateName));
+% states = geoshape(shaperead('usastatehi', 'UseGeoCoords', true));
+% 
+% placenames = gpxread('boston_placenames');
+% route = gpxread('sample_route.gpx');
+% 
+% stateName = 'Massachusetts';
+% ma = states(strcmp(states.Name, stateName));
 
 figure
 % ax = usamap('conus');
@@ -16,8 +15,7 @@ figure
 % geoshow(states)
 geoshow(peanut_field)
 title({ ...
-    'Conterminous USA State Boundaries', ...
-    'Polygon Geographic Vector Data'})
+    'Lat/Lon Data of Peanut Field'})
 
 % figure
 % ax = usamap('ma');
