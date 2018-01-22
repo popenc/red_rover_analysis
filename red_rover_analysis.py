@@ -290,7 +290,7 @@ class GPSDataHandler(GPSPlot):
 		"""
 		self.gpx_point = '<rtept lat="{}" lon="{}"></rtept>'  # lat/lon template for gpx point
 
-	def create_gpx_from_csv(self):
+	def create_gpx_from_csv(self, row_skip=2):
 		"""
 		Reads in CSV of lat/lons,
 		then wraps gpx tags around it,
@@ -301,8 +301,10 @@ class GPSDataHandler(GPSPlot):
 
 		# 2. Fill in gpx template with lat/lons from CSV:
 		gpx_points = ""
-		for row in csv_data:
-			gpx_points += self.gpx_point.format(row[0], row[1])  # building string of gpx points
+		# for row in csv_data:
+		for i in range(0, len(csv_data) - 1, row_skip):
+			_row = csv_data[i]
+			gpx_points += self.gpx_point.format(_row[0], _row[1])  # building string of gpx points
 		
 		# gpx_content = self.gpx_template.replace(" ", "").replace("\n", "").replace("\t", "")  # get instance of gpx template
 		# gpx_content.format(gpx_points)  # insert points into gpx template
@@ -467,8 +469,8 @@ def main():
 if __name__ == '__main__':
 	
 	# Run original code, plots data, reads/writes CSVs, plots/detects data min/maxes
-	# main()
+	main()
 
 	# Converts CSV lat/lon file into GPX template (input: name of input file)
-	main_gpx(sys.argv[1])
+	# main_gpx(sys.argv[1])
 
