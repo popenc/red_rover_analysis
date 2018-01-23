@@ -1,4 +1,5 @@
-peanut_field = gpxread('peanut_field.gpx');
+% peanut_field = gpxread('peanut_field.gpx');
+turn_tests = gpxread('turn_tests.gpx');
 
 % states = geoshape(shaperead('usastatehi', 'UseGeoCoords', true));
 % 
@@ -13,9 +14,10 @@ figure
 % oceanColor = [.5 .7 .9];
 % setm(ax, 'FFaceColor', oceanColor)
 % geoshow(states)
-geoshow(peanut_field)
+% geoshow(peanut_field)
+geoshow(turn_tests)
 title({ ...
-    'Lat/Lon Data of Peanut Field'})
+    'Lat/Lon Data of Turn Tests'})
 
 % figure
 % ax = usamap('ma');

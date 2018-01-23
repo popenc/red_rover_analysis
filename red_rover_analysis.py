@@ -431,6 +431,20 @@ def main():
 			plt.xlabel(gps_plot.xheader)
 			plt.grid(True)
 
+
+
+
+			#################################################################################
+			# Inserting temporary code segment for adding lines to turn tests data.			#
+			# This is to help determine some good lines to test the pure pursuit algorithm.	#
+			#################################################################################
+			_csv_data = gps_plot.upload_csv('Data/2018-01-23/pure_pursuit_line_test_1.csv')  # upload csv data of filename
+			_plot_data = gps_plot.plotxy(_csv_data, 'easting', 'northing')
+			plt.plot(_plot_data['xarray'], _plot_data['yarray'], 'go')  # plot line as green dots
+
+
+
+
 			# title is filename without file extension!
 			_title = gps_plot.filename[0:gps_plot.filename.index(".")]
 			plt.title("Turn Tests 10-04-2017 (5min Single Avg)")
