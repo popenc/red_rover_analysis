@@ -10,3 +10,5 @@ Links:
   + http://scipy-cookbook.readthedocs.io/items/SavitzkyGolay.html
 """
 
+import red_rover_model
+
