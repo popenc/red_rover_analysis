@@ -1,3 +1,4 @@
 utm
 matplotlib
+numpy
 gmplot

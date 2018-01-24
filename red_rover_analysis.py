@@ -15,8 +15,6 @@ import csv
 import utm
 import json
 
-import LatLon
-
 
 
 class GPSPlot(object):
