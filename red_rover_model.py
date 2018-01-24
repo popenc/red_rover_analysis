@@ -15,7 +15,7 @@ import sys
 import math
 import csv
 import codecs
-from pure_pursuit import State, PurePursuitModel
+from algorithms.pure_pursuit import State, PurePursuitModel
 
 
 
@@ -178,6 +178,7 @@ def get_data_from_csv(filename, t_header, x_header, y_header, row_step_size=2):
     Opens CSV by filename, and gets data from columns
     matching the header_list. Intended for reading in
     lat/lon or UTM x,y, and time for rover path.
+    
     Inputs:
         + row_step_size - amount of gps rows to step (e.g., 2 - get every other row)
         + filename - name of data file with gps path data

@@ -67,7 +67,7 @@ yi = interp1d(i, y, kind='cubic')(interp_i)
 #use this savitzky filter from http://scipy-cookbook.readthedocs.io/items/SavitzkyGolay.html
 yhat = savitzky_golay(yi, 31, 5) # window size 51, polynomial order 3
 
-plt.plot(xi, yi, 'r')  # plots data w/out savitzky filtering
+# plt.plot(xi, yi, 'r')  # plots data w/out savitzky filtering
 plt.plot(xi, yhat, 'b')  # plots data w/ savitzky filtering
 plt.plot(x, y, 'ko')  # plots points to follow
 

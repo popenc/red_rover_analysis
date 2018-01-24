@@ -6,8 +6,7 @@ data from ROS bag files using matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as md
-# from scipy import signal
-import detect_peaks
+from algorithms import detect_peaks
 import datetime
 import time
 import sys
