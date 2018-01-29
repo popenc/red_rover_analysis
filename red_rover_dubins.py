@@ -12,6 +12,15 @@ Links:
   + https://github.com/AndrewWalker/pydubins
   + https://docs.scipy.org/doc/scipy-0.17.0/reference/generated/scipy.interpolate.interp1d.html
   + http://scipy-cookbook.readthedocs.io/items/SavitzkyGolay.html
+
+pydubins README: This software finds the shortest paths between configurations
+for the Dubins' car [Dubins57], the forward only car-like vehicle with a constrained
+turning radius. A good description of the equations and basic strategies for doing
+this are described in section 15.3.1 "Dubins Curves" of the book "Planning Algorithms" [LaValle06].
+The approach used to find paths is based on the algebraic solutions published in [Shkel01].
+However, rather than using angular symmetries to improve performance, the simpler
+approach to test all possible solutions is used here. This code is primarily a Cython
+wrapper of https://github.com/AndrewWalker/Dubins-Curves
 """
 
 import red_rover_model
