@@ -26,13 +26,7 @@ import sys
 
 
 
-def interp1d_example_1():
-	"""
-	Borrowing from algorithms/interp1d_example.py, this function
-	will use the same setup, but with GPS data instead of a random
-	set of points.
-	"""
-	pts = np.array([[ 6.55525 ,  3.05472 ],
+sample_points = np.array([[ 6.55525 ,  3.05472 ],
 	   [ 6.17284 ,  2.802609],
 	   [ 5.53946 ,  2.649209],
 	   [ 4.93053 ,  2.444444],
@@ -80,6 +74,15 @@ def interp1d_example_1():
 	   [ 6.37056 ,  3.8778  ],
 	   [ 6.53116 ,  3.47228 ]])
 
+
+
+def interp1d_example_1():
+	"""
+	Borrowing from algorithms/interp1d_example.py, this function
+	will use the same setup, but with GPS data instead of a random
+	set of points.
+	"""
+
 	# This code segment reads in a csv file of gps data to use for modeling:
 	# # 1. Read in GPS points from peanut field data:
 	# # filename = 'Data/2017-10-04/turn_test_5min_single_avg_20171004_fix_utm.csv'  # input csv filename
@@ -87,10 +90,10 @@ def interp1d_example_1():
 	# t_header, x_header, y_header = 'field.header.seq', 'easting', 'northing'  # header declarations
 	# t_arr, x_arr, y_arr = red_rover_model.get_data_from_csv(filename, t_header, x_header, y_header, 2)  # path arrays
 	# xy_pairs = zip(x_arr, y_arr)  # aggregating lists to convert to np.array
-	# pts = np.array(xy_pairs)  # converts [(x1,y1), (x2,y2), ..] xy_pairs to np.array type, hopefully
+	# sample_points = np.array(xy_pairs)  # converts [(x1,y1), (x2,y2), ..] xy_pairs to np.array type, hopefully
 
-	x, y = pts.T
-	i = np.arange(len(pts))
+	x, y = sample_points.T
+	i = np.arange(len(sample_points))
 
 	#You can try Rbf, fitpack2 method
 	# 8x the original number of points
@@ -128,30 +131,104 @@ def plot_interp1d_example(x, y, xi, yi, yhat, yhat_interp):
 	plt.show()
 
 
-def plot_dubins_path(q0, q1, r=1.0, step_size=0.5):
-	    qs, _ = dubins.path_sample(q0, q1, r, step_size)
-	    qs = np.array(qs)
-	    xs = qs[:, 0]
-	    ys = qs[:, 1]
-	    us = xs + np.cos(qs[:, 2])
-	    vs = ys + np.sin(qs[:, 2])
-	    plt.plot(xs, ys, 'b-')
-	    plt.plot(xs, ys, 'r.')
-	    for i in xrange(qs.shape[0]):
-	        plt.plot([xs[i], us[i]], [ys[i], vs[i]],'r-')
-	    plt.show()
+def plot_dubins_path(qs, q0, q1):
+		"""
+		Plots the dubins path between a starting and ending point.
+		Inputs:
+			qs - dubins path data [[x,y,angle], ..]
+			q0 - initial position [x,y,angle]
+			q1 - target position [x,y,angle]
+		Returns: None
+		"""
+		xs = qs[:,0]
+		ys = qs[:,1]
+		us = xs + np.cos(qs[:, 2])
+		vs = ys + np.sin(qs[:, 2])
+		plt.plot(q0[0], q0[1], 'gx', markeredgewidth=4, markersize=10)  # actual start point
+		plt.plot(q1[0], q1[1], 'rx', markeredgewidth=4, markersize=10)  # actual end point
+		plt.plot(xs, ys, 'b-')
+		plt.plot(xs, ys, 'r.')
+		plt.plot(qs[0][0], qs[0][1], 'go', markersize=5)  # dubins start point
+		plt.plot(qs[-1][0], qs[-1][1], 'ro', markersize=5)  # dubins end point
+		plt.plot(sample_points[:,0], sample_points[:,1], 'k-')  # plot sample points path
+		for i in xrange(qs.shape[0]):
+			plt.plot([xs[i], us[i]], [ys[i], vs[i]],'r-')
+		plt.show()
+
+
+def plot_full_dubins_path(qs_array):
+	"""
+	Like plot_dubins_path() function, but plots a full set of points
+	instead a single A -> B two point dataset.
+	"""
+	# Initial setup: No directional plotting, just dots and path at the moment..
+	for qs in qs_array:
+		xs = qs[:,0]
+		ys = qs[:,1]
+		plt.plot(xs, ys, 'b-')
+		plt.plot(xs, ys, 'r.')
+	plt.show()
+
+
+def build_dubins_points(points):
+	"""
+	Takes sample points, which are a list of lists, and
+	converts them to a tuple with an additional element for 
+	vehicle orientation.
+	"""
+	dubins_path = []
+	for xypair in points:
+		dubin_pt = (xypair[0], xypair[1], 0.0)  # todo: not just default 0 for angle
+		dubins_path.append(dubin_pt)  # add dubin point tuple to list
+	return dubins_path
 
 
 def dubins_example_1():
 	"""
 	A simple example of the dubins model
 	"""
-	q0 = (0.0, 0.0, math.pi/4)
-	q1 = (-4.0, 4.0, -math.pi)
-	turning_radius = 1.0
-	step_size = 0.5
+	# Original q0, q1 from simple dubins example:
+	# q0 = (0.0, 0.0, math.pi/4)  # initial configuration
+	# q1 = (-4.0, 4.0, -math.pi)  # final configuration
 
-	plot_dubins_path(q0, q1, turning_radius, step_size)
+	turning_radius = 2.5  # min turning radius? (.pyx file just says 'turning radius')
+	step_size = 0.5  # sampling interval
+
+	dubin_path = build_dubins_points(sample_points)
+
+	qs_array = []  # an array of qs of type np.array
+
+	# # Testing dubins model for path instead of just
+	# # a single point A -> B test:
+	# for i in range(0, len(dubin_path) - 1):
+
+	# 	q0 = dubin_path[i]
+	# 	q1 = dubin_path[i + 1]
+
+	# 	print("q0, q1: {}, {}".format(q0, q1))
+
+	# 	qs,_ = dubins.path_sample(q0, q1, turning_radius, step_size)
+	# 	qs = np.array(qs)
+
+	# 	qs_array.append(qs)
+
+	# plot_full_dubins_path(qs_array)
+
+
+	#############################################################
+	# Original, working intial example of Dubins with 2 points: #
+	#############################################################
+	# Trying to use sample_points now for dubins example.
+	# I'm still a little baffled by only having a start and end point for the model.
+	q0 = (sample_points[0][0], sample_points[0][1], math.pi/4.0)
+	q1 = (sample_points[-1][0], sample_points[-1][1], -math.pi)
+	turning_radius = 2.5  # min turning radius? (.pyx file just says 'turning radius')
+	step_size = 0.5  # sampling interval
+	print("q0, q1: {}, {}".format(q0, q1))
+	qs, _ = dubins.path_sample(q0, q1, turning_radius, step_size)
+	qs = np.array(qs)
+	print("Dubins qs: {}".format(qs))
+	plot_dubins_path(qs, q0, q1)
 
 
 

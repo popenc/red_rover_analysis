@@ -150,11 +150,11 @@ class RoverModel(object):
         # plt.grid(True)
 
         # Index slope plot stuff:
-        flg, ax = plt.subplots(1)
-        plt.plot(t, ind_slope, "-r")
-        plt.xlabel("Time[s]")
-        plt.ylabel("Index slope[m/s]")
-        plt.grid(True)
+        # flg, ax = plt.subplots(1)
+        # plt.plot(t, ind_slope, "-r")
+        # plt.xlabel("Time[s]")
+        # plt.ylabel("Index slope[m/s]")
+        # plt.grid(True)
 
         # Saving output CSV for analyzing turn position and index
         # for path intersection problem:
@@ -178,7 +178,7 @@ def get_data_from_csv(filename, t_header, x_header, y_header, row_step_size=2):
     Opens CSV by filename, and gets data from columns
     matching the header_list. Intended for reading in
     lat/lon or UTM x,y, and time for rover path.
-    
+
     Inputs:
         + row_step_size - amount of gps rows to step (e.g., 2 - get every other row)
         + filename - name of data file with gps path data
@@ -260,7 +260,7 @@ def run_red_rover_model(Lf=0.5, row_step_size=2):
     Input: Lf - look-ahead distance in meters
     """
 
-    T = 120  # total time of model, units of seconds
+    T = 80  # total time of model, units of seconds
     V = 0.447  # rover's target velocity in m/s
     Kp = 1.0  # proportional gain for rover's velocity
 
