@@ -83,6 +83,12 @@ sample_points = np.array([[ 6.55525 ,  3.05472 ],
 	   [ 6.37056 ,  3.8778  ],
 	   [ 6.53116 ,  3.47228 ]])
 
+simple_line = np.array([[1,1],
+						[2,2],
+						[3,3],
+						[4,4],
+						[5,5]])
+
 
 
 def interp1d_example_1():
@@ -102,12 +108,13 @@ def interp1d_example_1():
 	# sample_points = np.array(xy_pairs)  # converts [(x1,y1), (x2,y2), ..] xy_pairs to np.array type, hopefully
 
 	x, y = sample_points.T
+
+	interp_num = 8  # num pts to interpolate b/w data pts
+
 	i = np.arange(len(sample_points))
 
 	#You can try Rbf, fitpack2 method
-	# 8x the original number of points
-	# interp_i = np.linspace(0, i.max(), 8 * i.max())
-	interp_i = np.linspace(0, i.max(), 2 * i.max())
+	interp_i = np.linspace(0, i.max(), interp_num * i.max())
 
 	#use interp1d to increase data points
 	xi = interp1d(i, x, kind='cubic')(interp_i)
@@ -117,18 +124,18 @@ def interp1d_example_1():
 	#use this savitzky filter from http://scipy-cookbook.readthedocs.io/items/SavitzkyGolay.html
 	# yhat = savitzky_golay.savitzky_golay(yi, 31, 5) # window size 51, polynomial order 3
 	yhat = savitzky_golay.savitzky_golay(y, 5, 3)
-	yhat_interp = savitzky_golay.savitzky_golay(yi, 5, 3)
+	yhat_interp = savitzky_golay.savitzky_golay(yi, 51, 5)
 
-	plot_interp1d_example(x, y, xi, yi, yhat, yhat_interp)  # plot paths
+	plot_interp1d_example(x, y, xi, yi, yhat_interp, yhat)  # plot paths
 
 
-def plot_interp1d_example(x, y, xi, yi, yhat, yhat_interp):
+def plot_interp1d_example(x, y, xi, yi, yhat_interp, yhat):
 
 	# Plot all sorts of points and lines:
 	# points_1, = plt.plot(xi, yi, 'mo', label='interp1d(x) vs. interp1d(y) points', markersize=5)
 	path_1, = plt.plot(xi, yi, 'm', label='int(x) vs. int(y)')
 	path_2, = plt.plot(x, yhat, 'c', label='x vs. sav(y)')
-	path_3, = plt.plot(xi, yhat_interp, 'b', label='int(x) vs. sav(int(y))')
+	# path_3, = plt.plot(xi, yhat_interp, 'b', label='int(x) vs. sav(int(y))')
 	points_2, = plt.plot(x, y, 'ko', markersize=8)  # original as black dots
 	points_3, = plt.plot(x[0], y[0], 'go', markersize=10)  # starting point as green dot
 	points_4, = plt.plot(x[-1], y[-1], 'ro', markersize=10)  # end point as red dot
@@ -159,9 +166,14 @@ def plot_dubins_path(qs, q0, q1):
 		plt.plot(xs, ys, 'r.')
 		plt.plot(qs[0][0], qs[0][1], 'go', markersize=5)  # dubins start point
 		plt.plot(qs[-1][0], qs[-1][1], 'ro', markersize=5)  # dubins end point
-		plt.plot(sample_points[:,0], sample_points[:,1], 'k-')  # plot sample points path
+		# plt.plot(sample_points[:,0], sample_points[:,1], 'k-')  # plot sample points path
 		for i in xrange(qs.shape[0]):
 			plt.plot([xs[i], us[i]], [ys[i], vs[i]],'r-')
+
+		# Adding x/y range for plots:
+		plt.xlim(min(qs[:,0]) - 1, max(qs[:,0]) + 1)
+		plt.ylim(min(qs[:,1]) - 1, max(qs[:,1]) + 1)
+
 		plt.show()
 
 
@@ -200,44 +212,82 @@ def dubins_example_1():
 	# q0 = (0.0, 0.0, math.pi/4)  # initial configuration
 	# q1 = (-4.0, 4.0, -math.pi)  # final configuration
 
-	turning_radius = 2.5  # min turning radius? (.pyx file just says 'turning radius')
-	step_size = 0.5  # sampling interval
-
 	dubin_path = build_dubins_points(sample_points)
 
 	qs_array = []  # an array of qs of type np.array
-
-	# # Testing dubins model for path instead of just
-	# # a single point A -> B test:
-	# for i in range(0, len(dubin_path) - 1):
-
-	# 	q0 = dubin_path[i]
-	# 	q1 = dubin_path[i + 1]
-
-	# 	print("q0, q1: {}, {}".format(q0, q1))
-
-	# 	qs,_ = dubins.path_sample(q0, q1, turning_radius, step_size)
-	# 	qs = np.array(qs)
-
-	# 	qs_array.append(qs)
-
-	# plot_full_dubins_path(qs_array)
-
 
 	#############################################################
 	# Original, working intial example of Dubins with 2 points: #
 	#############################################################
 	# Trying to use sample_points now for dubins example.
 	# I'm still a little baffled by only having a start and end point for the model.
-	q0 = (sample_points[0][0], sample_points[0][1], math.pi/4.0)
-	q1 = (sample_points[-1][0], sample_points[-1][1], -math.pi)
-	turning_radius = 2.5  # min turning radius? (.pyx file just says 'turning radius')
+
+	pivot_initial = -math.pi/2.0
+	pivot_final = -math.pi
+
+	# q0 = (sample_points[0][0], sample_points[0][1], pivot_initial)
+	# q1 = (sample_points[-1][0], sample_points[-1][1], pivot_final)
+
+	q0 = (1, 1, pivot_initial)
+	q1 = (5, 5, pivot_final)
+
+
+	turning_radius = 0.5  # min turning radius? (.pyx file just says 'turning radius')
 	step_size = 0.5  # sampling interval
+
+
 	print("q0, q1: {}, {}".format(q0, q1))
 	qs, _ = dubins.path_sample(q0, q1, turning_radius, step_size)
 	qs = np.array(qs)
 	print("Dubins qs: {}".format(qs))
 	plot_dubins_path(qs, q0, q1)
+
+
+def combined_savitzky_dubins_example():
+	"""
+	Testing a simple configuration of using the Dubins
+	model to follow smoothed points created by the Savitzky-Golay
+	filter for a simple GPS path.
+	"""
+	gps_path = simple_line
+
+	x, y = simple_line.T
+	i = np.arange(len(simple_line))
+
+	rover_initial = (0.1, 0.5, 0.0)  # x,y,angle
+	rover_final = (5.5, 5.5, math.pi/2.0)
+
+	interp_i = np.linspace(0, i.max(), 2 * i.max())
+	xi = interp1d(i, x, kind='cubic')(interp_i)
+	yi = interp1d(i, y, kind='cubic')(interp_i)
+	# yhat_interp = savitzky_golay.savitzky_golay(yi, 7, 5)
+
+	yhat = savitzky_golay.savitzky_golay(yi, 7, 5)  # SG filter w/out interpolation..
+
+	modeled_path = []
+
+	for i in range(0, len(xi) - 1):
+
+		_angle = np.arctan((yhat[i + 1] - yhat[i]) / (xi[i + 1] - xi[i]))  # angle of rover for dubin's position tuples
+
+		
+
+
+	# Plotting settings:
+
+	plt.plot(x, y, 'k-')
+	plt.plot(x, y, 'ko', markersize=10)
+
+	plt.plot(xi, yhat, 'bo')
+
+	plt.plot(rover_initial[0], rover_initial[1], 'gx', markersize=10, markeredgewidth=4)
+	plt.plot(rover_final[0], rover_final[1], 'rx', markersize=10, markeredgewidth=4)
+
+	# Adding x/y range for plots:
+	plt.xlim(min(simple_line[:,0]) - 1, max(simple_line[:,0]) + 1)
+	plt.ylim(min(simple_line[:,1]) - 1, max(simple_line[:,1]) + 1)
+
+	plt.show()
 
 
 
@@ -252,5 +302,8 @@ if __name__ == '__main__':
 	
 	elif model == 'dubins':
 		dubins_example_1()  # run dubins example 1
+
+	elif model == 'combined':
+		combined_savitzky_dubins_example()  # run SG + Dubins example
 
 	print("Finished running {} model..".format(model))
