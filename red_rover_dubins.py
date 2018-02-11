@@ -23,7 +23,7 @@ approach to test all possible solutions is used here. This code is primarily a C
 wrapper of https://github.com/AndrewWalker/Dubins-Curves
 """
 
-import red_rover_model
+# import red_rover_model
 import numpy as np
 from scipy.interpolate import interp1d # Different interface to the same function
 from scipy.interpolate import Rbf, InterpolatedUnivariateSpline

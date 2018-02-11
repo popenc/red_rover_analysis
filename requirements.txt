@@ -2,3 +2,5 @@ utm
 matplotlib
 numpy
 gmplot
+scipy
+dubins

@@ -9,7 +9,7 @@ Phase 4 - A dynamic model using ROS (kind of like the turtlesim example)
 """
 
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
+# import matplotlib.animation as animation
 import numpy as np
 import sys
 import math
