@@ -254,24 +254,31 @@ def get_gps_time_diffs(ct):
 
 
 
-def run_red_rover_model(Lf=0.5, row_step_size=2):
+# def run_red_rover_model(Lf=0.5, row_step_size=2):
+def run_red_rover_model(initial_pos, final_pos, x_path, y_path):
     """
     Incrementing lookahead for testing, saving plots of pngs
     Input: Lf - look-ahead distance in meters
     """
 
-    T = 8000  # total time of model, units of seconds
+    T = 60  # total time of model, units of seconds
     V = 0.447  # rover's target velocity in m/s
     Kp = 1.0  # proportional gain for rover's velocity
+    Lf = 2.5
+    row_step_size = 2
 
-    x0, y0 = 259551, 3.48472e6  # Initial rover starting position (original, works)
-    # x0, y0 = 259543, 3484716  # Good start position for path intersection troubleshooting
-    path_filename = 'Data/2017-09-20/gps_field_test_fixtopic_20170920_reduced_utm.csv'
+    # x0, y0 = 259551, 3.48472e6  # Initial rover starting position (original, works)
+    # # x0, y0 = 259543, 3484716  # Good start position for path intersection troubleshooting
+    # path_filename = 'Data/2017-09-20/gps_field_test_fixtopic_20170920_reduced_utm.csv'
 
-    # ct, cx, cy = get_data_from_csv(
-    #                 path_filename, 'field.header.stamp', 'easting', 'northing', row_step_size)
-    ci, cx, cy = get_data_from_csv(
-                    path_filename, 'field.header.seq', 'easting', 'northing', row_step_size)
+    # # ct, cx, cy = get_data_from_csv(
+    # #                 path_filename, 'field.header.stamp', 'easting', 'northing', row_step_size)
+    # ci, cx, cy = get_data_from_csv(
+    #                 path_filename, 'field.header.seq', 'easting', 'northing', row_step_size)
+
+    x0 = initial_pos[0]
+    y0 = initial_pos[1]
+    cx, cy = x_path, y_path
 
     rover_model = RoverModel(x0, y0, Lf, T, V)  # initialize rover model
     pure_pursuit_model = PurePursuitModel(Lf, Kp)  # initialize pure pursuit model
