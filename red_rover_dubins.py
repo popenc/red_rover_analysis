@@ -185,6 +185,8 @@ def plot_full_dubins_path(qs_array, x_path, y_path):
 	"""
 	# Initial setup: No directional plotting, just dots and path at the moment..
 
+	print("QS Array: {}".format(qs_array))
+
 	for qs in qs_array:
 		# xs = qs[:,0]
 		# ys = qs[:,1]

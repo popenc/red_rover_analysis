@@ -72,7 +72,7 @@ if __name__ == '__main__':
 
 
 	# x_path, y_path = _rrc_obj.create_straight_path(1, 10)  # path to follow
-	x_path, y_path = _rrc_obj.create_straight_rows(1, 10, 6, 3)  # path to follow
+	x_path, y_path = _rrc_obj.create_straight_rows(1, 2, 6, 1)  # path to follow
 
 	initial_pos = (2, -5, math.pi/2.0)  # initial rover position
 	final_pos = (x_path[-1], y_path[-1] + 1, (3*math.pi)/2.0)  # final rover position
