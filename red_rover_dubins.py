@@ -156,6 +156,9 @@ def plot_dubins_path(qs, q0, q1, show=True):
 			q1 - target position [x,y,angle]
 		Returns: None
 		"""
+
+		print("QS Array (plot_dubins_path): {}".format(qs))
+
 		xs = qs[:,0]
 		ys = qs[:,1]
 		us = xs + np.cos(qs[:, 2])
@@ -185,7 +188,7 @@ def plot_full_dubins_path(qs_array, x_path, y_path):
 	"""
 	# Initial setup: No directional plotting, just dots and path at the moment..
 
-	print("QS Array: {}".format(qs_array))
+	# print("QS Array: {}".format(qs_array))
 
 	for qs in qs_array:
 		# xs = qs[:,0]
@@ -217,50 +220,20 @@ def dubins_example_1(initial_pos, final_pos, x_path=None, y_path=None):
 	"""
 	A simple example of the dubins model
 	"""
-	# Original q0, q1 from simple dubins example:
-	# q0 = (0.0, 0.0, math.pi/4)  # initial configuration
-	# q1 = (-4.0, 4.0, -math.pi)  # final configuration
-
-	# dubin_path = build_dubins_points(sample_points)
 
 	qs_array = []  # an array of qs of type np.array
 	ab_array = []  # A-->B position array (e.g., [[(Ax,Ay,Atheta), (Bx,By,Btheta)],..])
 	dubins_data = {}
-	turning_radius = 2.5  # min turning radius? (.pyx file just says 'turning radius')
-	step_size = 0.5  # sampling interval
-
-	#############################################################
-	# Original, working intial example of Dubins with 2 points: #
-	#############################################################
-	# Trying to use sample_points now for dubins example.
-	# I'm still a little baffled by only having a start and end point for the model.
-
-	# pivot_initial = -math.pi/2.0
-	# pivot_final = -math.pi
-
-	# # q0 = (sample_points[0][0], sample_points[0][1], pivot_initial)
-	# # q1 = (sample_points[-1][0], sample_points[-1][1], pivot_final)
-
-	# q0 = (1, 1, pivot_initial)
-	# q1 = (5, 5, pivot_final)
-
-
-	# print("q0, q1: {}, {}".format(q0, q1))
-	# qs, _ = dubins.path_sample(q0, q1, turning_radius, step_size)
-	# qs = np.array(qs)
-	# print("Dubins qs: {}".format(qs))
-	# plot_dubins_path(qs, q0, q1)
-
-
-	# Straight-line example, setting angle to pi/2 for all points:
-	# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	# turning_radius = 2.5  # min turning radius? (.pyx file just says 'turning radius')
+	# step_size = 0.5  # sampling interval
+	turning_radius = 1.0
+	step_size = 0.5
 
 	# Initializing dubins model:
 	q0 = initial_pos
-	q1 = (x_path[0], y_path[0], math.pi/2.0)
+	q1 = (x_path[0], y_path[0], math.pi)
 	qs,_ = dubins.path_sample(q0, q1, turning_radius, step_size)
 	qs = np.array(qs)
-	# qs_array.append(qs)
 	dubins_data = {
 		'q0': q0,
 		'q1': q1,
@@ -269,9 +242,9 @@ def dubins_example_1(initial_pos, final_pos, x_path=None, y_path=None):
 	qs_array.append(dubins_data)
 
 	# Execute dubins model across sample path:
-	for i in range(1, len(x_path) - 1):
+	for i in range(1, len(x_path)):
 		q0 = q1
-		q1 = (x_path[i], y_path[i], math.pi/2.0)
+		q1 = (x_path[i], y_path[i], math.pi)
 		qs,_ = dubins.path_sample(q0, q1, turning_radius, step_size)
 		qs = np.array(qs)
 		dubins_data = {
@@ -280,7 +253,6 @@ def dubins_example_1(initial_pos, final_pos, x_path=None, y_path=None):
 			'qs': qs
 		}
 		qs_array.append(dubins_data)
-		# ab_array.append([q0, q1])
 
 	plot_full_dubins_path(qs_array, x_path, y_path)  # Plot model path
 
